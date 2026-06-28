@@ -8,7 +8,8 @@ from observability.logger import logger
 from observability.tracing import create_trace_id
 from tools.utils import extract_code, classify_failure
 from database.repository import MemoryRepository
-from config import GRAPH_RETRIES
+from memory.memory_writer import embed_and_upsert_memory
+from config import GRAPH_RETRIES, ENTRYPOINT
 
 # ---------------------
 # Shared StateSchema
@@ -16,6 +17,7 @@ from config import GRAPH_RETRIES
 
 class StateSchema():
     query: str
+    memory: str
     code: str
     output: str
     error: str
@@ -34,6 +36,7 @@ class StateSchema():
 def memory_node(state):
     memory = memory_agent(state["query"])
     print(memory)
+    return {**state, "memory": memory}
 
 def coder_node(state):
     
@@ -44,6 +47,7 @@ def coder_node(state):
     
     code = coder_agent(
         state["query"],
+        state["memory"],
         state["code"],
         state["feedback"]
     )
@@ -104,7 +108,6 @@ def critic_node(state):
         )
 
         if state["had_initial_error"]:
-            repo = MemoryRepository()
             record = {
                 "query": state["query"],
                 "solution": state["code"],
@@ -116,8 +119,9 @@ def critic_node(state):
                 "report": "",
                 "trace_id": state["trace_id"]
             }
-            repo.add_memory_to_db(record)
 
+            embed_and_upsert_memory(record, state["trace_id"])
+            
     # FAILURE
 
     else:
@@ -191,12 +195,13 @@ def route_after_critic(state):
 
 graph = StateGraph(StateSchema)
 
-graph.set_entry_point("coder")
+graph.set_entry_point(ENTRYPOINT)
 graph.add_node("memory", memory_node)
 graph.add_node("coder", coder_node)
 graph.add_node("executor", executor_node)
 graph.add_node("critic", critic_node)
 
+graph.add_edge("memory", "coder")
 graph.add_edge("coder", "executor")
 graph.add_edge("executor", "critic")
 graph.add_conditional_edges("critic", route_after_critic)
@@ -211,6 +216,7 @@ graph_builder = graph.compile()
 def build_initial_state(query: str):
     return {
         "query": query,
+        "memory": "",
         "code": "",
         "output": "",
         "error": "",
@@ -223,4 +229,4 @@ def build_initial_state(query: str):
         "trace_id": create_trace_id()
     }
 
-graph_builder.invoke(build_initial_state("Just print Hello in the console"))
+graph_builder.invoke(build_initial_state("Just say Hi using Python"))

@@ -2,7 +2,8 @@ from agents.llm import ask_llm
 from config import DEBUG_MODE
 
 def coder_agent(
-        query: str, 
+        query: str,
+        memory: str,
         code: str, 
         feedback: str
     ):
@@ -13,6 +14,12 @@ def coder_agent(
     # ------------------------------------
 
     prompt = f"Without explanation, using Python, solve this: {query}"
+
+    if memory:
+        prompt += f"""
+Relevant past memory:
+{memory}
+"""
 
     if feedback:
         prompt += f"""
