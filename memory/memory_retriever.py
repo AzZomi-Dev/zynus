@@ -12,14 +12,6 @@ def retrieve_memory(query: str, limit: int = 1):
     results = qdrant_client.query_points(
         collection_name="memory",
         query=vector,
-        query_filter=Filter(
-            must=[
-                models.FieldCondition(
-                    key="success",
-                    match=models.MatchValue(value=True)
-                )
-            ]
-        ),
         limit=limit
     )
     return results.points

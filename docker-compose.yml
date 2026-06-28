@@ -10,6 +10,36 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - mysql_data:/mysql_data
+
+  sandbox:
+    build:
+      context: .
+      dockerfile: sandbox/Dockerfile
+    container_name: zynus-sandbox
+    ports:
+      - "7070:7070"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+      - /var/tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 2048
+      nproc: 128
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    restart: unless-stopped
 
   qdrant:
     image: qdrant/qdrant
