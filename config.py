@@ -1,5 +1,6 @@
-DEBUG_MODE = True
-MODE = "fixed" # fall
+ENTRYPOINT = "memory"
+DEBUG_MODE = False
+MODE = "fixed" # fall | fixed
 
 MODEL = "gemma3:1b"
 EMB_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
