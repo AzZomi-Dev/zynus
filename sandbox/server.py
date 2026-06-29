@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 import os
 
-app = FastAPI(title="zynus", version="1.0.0")
+app = FastAPI(title="zynus", version="1.0.1")
 
 async def execute_code(code: str):
     temp_path = None
