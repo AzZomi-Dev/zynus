@@ -229,4 +229,5 @@ def build_initial_state(query: str):
         "trace_id": create_trace_id()
     }
 
-graph_builder.invoke(build_initial_state("Just say Hi using Python"))
+if __name__ == "__main__":
+    graph_builder.invoke(build_initial_state("Say Hi using Python"))
