@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="120" viewBox="0 0 420 120">
+  <rect width="420" height="120" rx="16" fill="#0d1117"></rect>
+  <circle cx="60" cy="60" r="28" fill="#2ea043"></circle>
+  <path d="M45 42 L75 42 L45 78 L75 78" stroke="white" stroke-width="6" fill="none"></path>
+  <text x="110" y="73" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#f0f6fc">
+    Zynus
+  </text>
+</svg>
