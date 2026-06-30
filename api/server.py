@@ -6,7 +6,7 @@ from database.db import SessionLocal
 from sqlalchemy import text
 import requests
 
-app = FastAPI(title="zynus", version="1.0.1")
+app = FastAPI(title="zynus", version="1.0.2")
 
 class Query(BaseModel):
     query: str
