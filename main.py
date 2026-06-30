@@ -1,4 +1,6 @@
 from langgraph.graph import StateGraph, END
+from agents.router import router_agent
+from agents.responder import responder_agent
 from agents.memory_agent import memory_agent
 from agents.coder import coder_agent
 from agents.executor import executor_agent
@@ -33,9 +35,48 @@ class StateSchema():
 # Nodes
 # ---------------------
 
+def router_node(state):
+    logger.info(
+        "router_started",
+        trace_id=state["trace_id"]
+    )
+    
+    route = router_agent(state["query"])
+
+    logger.info(
+        "router_completed",
+        trace_id=state["trace_id"],
+        route=route
+    )
+    
+    return {**state, "route": route}
+
+def responder_node(state):
+    logger.info("responder_started", trace_id=state["trace_id"])
+
+    response = responder_agent(state["query"])
+
+    logger.info("respodner_completed", trace_id=state["trace_id"])
+
+    return {
+        **state,
+        "output": response
+    }
+
 def memory_node(state):
+    logger.info(
+        "memory_started", 
+        trace_id=state["trace_id"]
+    )    
+
     memory = memory_agent(state["query"])
-    print(memory)
+
+    logger.info(
+        "memory_completed", 
+        trace_id=state["trace_id"],
+        memory_found=bool(memory)
+    )
+    
     return {**state, "memory": memory}
 
 def coder_node(state):
@@ -177,6 +218,18 @@ def fallback_node(state):
 # Routers
 # ---------------------
 
+def route_after_router(state):
+    
+    route = state["route"]
+    
+    if route == "qa":
+        return "responder"
+    
+    if route == "code":
+        return "memory"
+
+    return "responder"
+
 def route_after_critic(state):
 
     if state["success"]:
@@ -196,16 +249,20 @@ def route_after_critic(state):
 graph = StateGraph(StateSchema)
 
 graph.set_entry_point(ENTRYPOINT)
+
+graph.add_node("router", router_node)
+graph.add_node("responder", responder_node)
 graph.add_node("memory", memory_node)
 graph.add_node("coder", coder_node)
 graph.add_node("executor", executor_node)
 graph.add_node("critic", critic_node)
+graph.add_node("fallback", fallback_node)
 
+graph.add_conditional_edges("router", route_after_router)
 graph.add_edge("memory", "coder")
 graph.add_edge("coder", "executor")
 graph.add_edge("executor", "critic")
 graph.add_conditional_edges("critic", route_after_critic)
-graph.add_node("fallback", fallback_node)
 
 # ---------------------
 # Run
