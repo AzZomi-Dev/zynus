@@ -1,4 +1,4 @@
-ENTRYPOINT = "memory"
+ENTRYPOINT = "router"
 DEBUG_MODE = False
 MODE = "fixed" # fall | fixed
 

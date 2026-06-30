@@ -21,4 +21,4 @@ def ask_llm_json(prompt: str):
         obj, _ = json.JSONDecoder().raw_decode(response[8:])
         return obj
 
-    return response
+    return json.loads(response)
