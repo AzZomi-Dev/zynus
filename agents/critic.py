@@ -26,7 +26,7 @@ And generated code: {code}
 
 Return only valid JSON. Example:
 {{
-    "success": True,
+    "success": true,
     "feedback": "Why"
 }}
 Be strict and concise
