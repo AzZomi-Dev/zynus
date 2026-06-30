@@ -56,7 +56,7 @@ def responder_node(state):
 
     response = responder_agent(state["query"])
 
-    logger.info("respodner_completed", trace_id=state["trace_id"])
+    logger.info("responder_completed", trace_id=state["trace_id"])
 
     return {
         **state,
