@@ -1,5 +1,6 @@
 from langgraph.graph import StateGraph, END
 from agents.router import router_agent
+from agents.researcher import researcher_agent
 from agents.responder import responder_agent
 from agents.memory_agent import memory_agent
 from agents.coder import coder_agent
@@ -19,6 +20,7 @@ from config import GRAPH_RETRIES, ENTRYPOINT
 
 class StateSchema():
     query: str
+    research: str
     memory: str
     code: str
     output: str
@@ -51,10 +53,24 @@ def router_node(state):
     
     return {**state, "route": route}
 
+def researcher_node(state):
+    logger.info(
+        "researcher_started", 
+        trace_id=state["trace_id"]
+    )
+    research = researcher_agent(state["query"])
+    logger.info(
+        "researcher_completed", trace_id=state["trace_id"]
+    )
+    return {
+        **state,
+        "research": research
+    }
+
 def responder_node(state):
     logger.info("responder_started", trace_id=state["trace_id"])
 
-    response = responder_agent(state["query"])
+    response = responder_agent(state["query"], state["research"])
 
     logger.info("responder_completed", trace_id=state["trace_id"])
 
@@ -225,6 +241,9 @@ def route_after_router(state):
     if route == "qa":
         return "responder"
     
+    if route == "research":
+        return "researcher"
+    
     if route == "code":
         return "memory"
 
@@ -251,6 +270,7 @@ graph = StateGraph(StateSchema)
 graph.set_entry_point(ENTRYPOINT)
 
 graph.add_node("router", router_node)
+graph.add_node("researcher", researcher_node)
 graph.add_node("responder", responder_node)
 graph.add_node("memory", memory_node)
 graph.add_node("coder", coder_node)
@@ -259,6 +279,7 @@ graph.add_node("critic", critic_node)
 graph.add_node("fallback", fallback_node)
 
 graph.add_conditional_edges("router", route_after_router)
+graph.add_edge("researcher", "responder")
 graph.add_edge("memory", "coder")
 graph.add_edge("coder", "executor")
 graph.add_edge("executor", "critic")
@@ -273,6 +294,7 @@ graph_builder = graph.compile()
 def build_initial_state(query: str):
     return {
         "query": query,
+        "research": "",
         "memory": "",
         "code": "",
         "output": "",
