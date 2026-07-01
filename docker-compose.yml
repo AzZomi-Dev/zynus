@@ -54,6 +54,13 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
+  redis:
+    image: redis:7-alpine
+    container_name: zynus-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
 volumes:
   mysql_data:
   qdrant_data:
