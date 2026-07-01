@@ -55,6 +55,7 @@
 * Self-repairing execution loop
 * Secure sandboxed code execution
 * Long-term semantic memory
+* Asynchronous background processing with Redis Queue (RQ)
 * Qdrant vector database
 * Health monitoring endpoints
 * Redis-based rate limiting

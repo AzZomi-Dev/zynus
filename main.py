@@ -12,6 +12,8 @@ from observability.tracing import create_trace_id
 from tools.utils import extract_code, classify_failure
 from database.repository import MemoryRepository
 from memory.memory_writer import embed_and_upsert_memory
+from redis_services.redis_queue import memory_write_queue
+from rq import Retry
 from config import GRAPH_RETRIES, ENTRYPOINT
 
 # ---------------------
@@ -233,7 +235,11 @@ def fallback_node(state):
     logger.info("fallback_completed")
     
     repo = MemoryRepository()
-    repo.add_memory_to_db(record)
+    memory_write_queue.enqueue(
+        repo.add_memory_to_db,
+        record,
+        retry=Retry(max=3, interval=[10,20,30])
+    )
     
     return {**state, "report": report}
 
@@ -259,7 +265,7 @@ def route_after_router(state):
 def route_after_critic(state):
 
     if state["success"]:
-        print(f"\n\nSUCCESS\nOUTPUT: {state["output"]}")
+        print(f"\n\nSUCCESS\nOUTPUT: {state['output']}")
         return END
 
     if state["retries"] >= GRAPH_RETRIES:
