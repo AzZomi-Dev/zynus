@@ -60,7 +60,8 @@ def researcher_node(state):
     )
     research = researcher_agent(state["query"])
     logger.info(
-        "researcher_completed", trace_id=state["trace_id"]
+        "researcher_completed", 
+        trace_id=state["trace_id"]
     )
     return {
         **state,
@@ -68,11 +69,17 @@ def researcher_node(state):
     }
 
 def responder_node(state):
-    logger.info("responder_started", trace_id=state["trace_id"])
+    logger.info(
+        "responder_started", 
+        trace_id=state["trace_id"]
+    )
 
     response = responder_agent(state["query"], state["research"])
 
-    logger.info("responder_completed", trace_id=state["trace_id"])
+    logger.info(
+        "responder_completed", 
+        trace_id=state["trace_id"]
+    )
 
     return {
         **state,
