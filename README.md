@@ -17,13 +17,13 @@
          ┌─────────────────────┼─────────────────────┐
          │                     │                     │
          ▼                     ▼                     ▼
-      QA Route          Responder Route        Coding Route
-         │                                           │
-         │                                           ▼
-         │                                   Memory Retriever
-         │                                           │
-         │                                           ▼
-         │                                         Coder
+      QA Route           Research Route        Coding Route
+         │                     │                     │
+         │                     ▼                     ▼
+         │                Researcher          Memory Retriever
+         │                     │                     │
+         │                     ▼                     ▼
+         │                 Responder               Coder
          │                                           │
          │                                           ▼
          │                                        Sandbox
