@@ -8,7 +8,7 @@ from middleware.rate_limit import rate_limit_dependency
 from redis_services.redis_client import redis_conn
 import requests
 
-app = FastAPI(title="zynus", version="1.0.2")
+app = FastAPI(title="zynus", version="1.0.3")
 
 class Query(BaseModel):
     query: str

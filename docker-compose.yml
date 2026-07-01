@@ -1,6 +1,38 @@
 version: "3.7"
 
 services:
+
+  zynus:
+    build: .
+    container_name: zynus-container
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_URL: ${OLLAMA_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      SANDBOX_URL: ${SANDBOX_URL}
+      REDIS_URL: ${REDIS_URL}
+      QDRANT_URL: ${QDRANT_URL}
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - hf_cache:/root/.cache/huggingface
+
+  rq:
+    build: .
+    container_name: zynus-rq
+    command: rq worker memory-write
+    environment:
+      OLLAMA_URL: ${OLLAMA_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      SANDBOX_URL: ${SANDBOX_URL}
+      REDIS_URL: ${REDIS_URL}
+      QDRANT_URL: ${QDRANT_URL}
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - hf_cache
+    
   mysql:
     image: mysql:5.5
     container_name: zynus-mysql
@@ -64,3 +96,4 @@ services:
 volumes:
   mysql_data:
   qdrant_data:
+  hf_cache:
