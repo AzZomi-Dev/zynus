@@ -57,6 +57,7 @@
 * Long-term semantic memory
 * Qdrant vector database
 * Health monitoring endpoints
+* Redis-based rate limiting
 * Connection pooling
 * Structured logging
 * Request correlation IDs
