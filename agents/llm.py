@@ -5,15 +5,25 @@ def ask_llm(prompt: str):
     payload = {
         "prompt": prompt,
         "model": MODEL,
-        "stream": False
+        "stream": True
     }
     print(payload)
-    response = requests.post(OLLAMA_URL, json=payload)
-    cleaned_response = response.json()["response"]
+    response = requests.post(OLLAMA_URL, json=payload, stream=True)
+    full = ""
+    for line in response.iter_lines():
+        if not line:
+            continue
+        
+        data = json.loads(line.decode("utf-8"))
+        token = data.get("response", "")
 
-    print(cleaned_response)
-
-    return cleaned_response
+        print(token, end="", flush=True)
+        full += token
+        
+        if data.get("done"):
+            break
+    
+    return full
 
 def ask_llm_json(prompt: str):
     response = ask_llm(prompt)
