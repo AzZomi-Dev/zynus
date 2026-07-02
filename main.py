@@ -94,12 +94,13 @@ def memory_node(state):
         trace_id=state["trace_id"]
     )    
 
-    memory = memory_agent(state["query"])
+    memory, cache_hit = memory_agent(state["query"])
 
     logger.info(
         "memory_completed", 
         trace_id=state["trace_id"],
-        memory_found=bool(memory)
+        memory_found=bool(memory),
+        cache_hit=bool(cache_hit)
     )
     
     return {**state, "memory": memory}
