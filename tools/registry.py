@@ -1,7 +1,5 @@
 from tools.rag import retriever_tool
-
-def web_search_tool(query):
-    return f"web_serach_tool is underdevelopment, we can't answer the query: {query}"
+from tools.web_search_tool import web_search_tool
 
 TOOLS = {
     "retriever_tool": {
