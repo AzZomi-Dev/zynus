@@ -3,10 +3,31 @@ from sqlalchemy.orm import (
     Mapped, 
     mapped_column
 )
-from sqlalchemy import Text, String, TIMESTAMP, func
+from sqlalchemy import Text, String, Boolean, TIMESTAMP, func
 
 class Base(DeclarativeBase):
     pass
+
+class FAQ(Base):
+    __tablename__ = "faqs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    language: Mapped[str] = mapped_column(String(2), index=True)
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text)
+
+    category: Mapped[str | None] = mapped_column(
+        Text, 
+        nullable=True
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, 
+        default=True
+    )
+    created_at: Mapped[TIMESTAMP] = mapped_column(
+        TIMESTAMP, 
+        server_default=func.now()
+    )
 
 class Memory(Base):
     __tablename__ = "memories"
