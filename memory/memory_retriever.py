@@ -36,11 +36,13 @@ def retrieve_memory(query: str, limit: int = 1):
 
     embeddings = get_embeddings()
     vector = embeddings.embed_query(query)
-
-    results = qdrant_client.query_points(
-        collection_name="memory",
-        query=vector,
-        limit=limit,
-    )
-
-    return results.points
+    try:
+        results = qdrant_client.query_points(
+            collection_name="memory",
+            query=vector,
+            limit=limit,
+        )
+    
+        return results.points
+    except Exception:
+        return []
