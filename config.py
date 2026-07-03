@@ -1,3 +1,18 @@
+"""
+Application configuration.
+
+This module centralizes application settings loaded from environment
+variables and defines runtime constants shared across the project.
+
+Configuration includes:
+- Workflow settings
+- Model configuration
+- Service endpoints
+- Cache settings
+- Rate limiting
+- Retry limits
+"""
+
 import os
 from dotenv import load_dotenv
 load_dotenv(".env.local")

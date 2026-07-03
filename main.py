@@ -1,3 +1,23 @@
+"""
+Workflow graph.
+
+This module defines the complete multi-agent workflow using LangGraph.
+
+The workflow coordinates specialized agents responsible for:
+
+- Query routing
+- Research
+- Response generation
+- Memory retrieval
+- Code generation
+- Code execution
+- Code evaluation
+- Failure handling
+
+The graph is responsible only for orchestration.
+Each node delegates business logic to a dedicated agent.
+"""
+
 from langgraph.graph import StateGraph, END
 from agents.router import router_agent
 from agents.researcher import researcher_agent
@@ -21,6 +41,16 @@ from config import GRAPH_RETRIES, ENTRYPOINT
 # ---------------------
 
 class StateSchema():
+    
+    """
+    Shared workflow state.
+
+    Every node receives and returns this state object.
+    It acts as the communication channel between agents.
+
+    Fields are progressively populated as the workflow advances.
+    """
+    
     query: str
     research: str
     memory: str
@@ -40,6 +70,11 @@ class StateSchema():
 # ---------------------
 
 def router_node(state):
+    """
+    Entry node.
+
+    Determines which workflow should process the incoming query.
+    """
     logger.info(
         "router_started",
         trace_id=state["trace_id"]
@@ -56,6 +91,9 @@ def router_node(state):
     return {**state, "route": route}
 
 def researcher_node(state):
+    """
+    Executes the research workflow and stores the collected context.
+    """
     logger.info(
         "researcher_started", 
         trace_id=state["trace_id"]
@@ -71,6 +109,9 @@ def researcher_node(state):
     }
 
 def responder_node(state):
+    """
+    Generates the final natural-language response using the research context.
+    """
     logger.info(
         "responder_started", 
         trace_id=state["trace_id"]
@@ -89,6 +130,9 @@ def responder_node(state):
     }
 
 def memory_node(state):
+    """
+    Retrieves relevant semantic memories from Redis/Qdrant.
+    """
     logger.info(
         "memory_started", 
         trace_id=state["trace_id"]
@@ -106,7 +150,10 @@ def memory_node(state):
     return {**state, "memory": memory}
 
 def coder_node(state):
-    
+    """
+    Generates Python code using the current query, retrieved memory,
+    and critic feedback from previous attempts.
+    """
     logger.info(
         "coder_started",
         trace_id=state["trace_id"]
@@ -132,7 +179,9 @@ def coder_node(state):
     }
 
 def executor_node(state):
-    
+    """
+    Executes generated code inside the sandbox environment.
+    """
     logger.info(
         "executor_started",
         trace_id=state["trace_id"]
@@ -153,7 +202,12 @@ def executor_node(state):
     }
 
 def critic_node(state):
-    
+    """
+    Evaluates execution results.
+
+    Determines whether the workflow should terminate or perform another
+    repair iteration.
+    """
     logger.info(
         "critic_started",
         trace_id=state["trace_id"]
@@ -212,6 +266,11 @@ def critic_node(state):
     }
 
 def fallback_node(state):
+    """
+    Final failure handler.
+
+    Persists execution failure information and returns a diagnostic report.
+    """
     logger.info("fallback_started")
 
     report = fallback_agent(
@@ -249,7 +308,9 @@ def fallback_node(state):
 # ---------------------
 
 def route_after_router(state):
-    
+    """
+    Decide which workflow branch to execute after routing.
+    """
     route = state["route"]
     
     if route == "qa":
@@ -264,7 +325,10 @@ def route_after_router(state):
     return "responder"
 
 def route_after_critic(state):
-
+    """
+    Decide whether to finish successfully, retry generation,
+    or transition to the fallback workflow.
+    """
     if state["success"]:
         print(f"\n\nSUCCESS\nOUTPUT: {state['output']}")
         return END
@@ -275,8 +339,26 @@ def route_after_critic(state):
     print(f"\n\nFAILURE, RETRYING.. CONSUMED: {state['retries']} RETRIES\n\n")
     return "coder"
 
+
 # ---------------------
-# Graph
+# Graph:
+#
+#                 Router
+#              /     |      \
+#             /      |       \
+#     Research     Memory      QA
+#         |           |
+#         ▼           ▼
+#    Responder     Coder
+#                     |
+#                 Executor
+#                     |
+#                  Critic
+#                 /      \
+#             END      Retry
+#                          |
+#                          ▼
+#                       Fallback
 # ---------------------
 
 graph = StateGraph(StateSchema)
@@ -306,6 +388,11 @@ graph.add_conditional_edges("critic", route_after_critic)
 graph_builder = graph.compile()
 
 def build_initial_state(query: str):
+    """
+    Create the initial workflow state for a new request.
+
+    Every workflow execution starts from this state.
+    """
     return {
         "query": query,
         "research": "",

@@ -1,3 +1,14 @@
+"""
+Initialize the Qdrant memory collection.
+
+This script recreates the "memory" collection using the current
+embedding model's vector dimension.
+
+Warning:
+Running this script deletes the existing collection and all stored
+vectors. It is intended for local development, testing, or resetting
+the vector database.
+"""
 from memory.qdrantClient import get_qdrant_client
 from qdrant_client.models import VectorParams, Distance
 from tools.utils import get_embeddings
