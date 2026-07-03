@@ -93,7 +93,17 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  grafana:
+    image: grafana/grafana
+    container_name: zynus-grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+
 volumes:
   mysql_data:
   qdrant_data:
+  grafana_data:
   hf_cache:
