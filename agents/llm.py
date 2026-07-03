@@ -1,14 +1,19 @@
 import requests, json
 from config import OLLAMA_URL, MODEL
+from observability.metrics import llm_latency, llm_requests
+import time
 
 def ask_llm(prompt: str):
+    start = time.time()
     payload = {
         "prompt": prompt,
         "model": MODEL,
         "stream": True
     }
     print(payload)
+    llm_requests.inc()
     response = requests.post(OLLAMA_URL, json=payload, stream=True)
+
     full = ""
     for line in response.iter_lines():
         if not line:
@@ -23,6 +28,7 @@ def ask_llm(prompt: str):
         if data.get("done"):
             break
     
+    llm_latency.observe(time.time() - start)
     return full
 
 def ask_llm_json(prompt: str):
