@@ -27,7 +27,7 @@ from observability.metrics import workflow_runs, active_workflows
 import logging
 import requests
 
-app = FastAPI(title="zynus", version="1.0.3")
+app = FastAPI(title="zynus", version="1.0.4")
 
 class IgnoreMetricsFilter(logging.Filter):
     """
