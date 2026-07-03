@@ -1,3 +1,11 @@
+"""
+Logging configuration.
+
+This module configures the application's structured logging using
+Structlog. Logs are emitted in JSON format to support centralized log
+aggregation and observability platforms.
+"""
+
 import logging
 import structlog
 

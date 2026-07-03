@@ -1,3 +1,19 @@
+"""
+Application entry point.
+
+This module configures the FastAPI application, exposes the public API,
+registers middleware, health checks, Prometheus metrics, and executes
+the LangGraph workflow.
+
+Responsibilities:
+- Configure the FastAPI application.
+- Expose REST endpoints.
+- Perform dependency health checks.
+- Execute workflow requests.
+- Expose Prometheus metrics.
+- Apply request rate limiting.
+"""
+
 from fastapi import FastAPI, Depends
 from main import graph_builder, build_initial_state
 from pydantic import BaseModel
@@ -14,23 +30,38 @@ import requests
 app = FastAPI(title="zynus", version="1.0.3")
 
 class IgnoreMetricsFilter(logging.Filter):
+    """
+    Exclude Prometheus scrape requests from access logs.
+    """    
     def filter(self, record):
         return "/metrics" not in record.getMessage()
 
-class IgnoreStreamFilter(logging.Filter):
-    def filter(self, record):
-        return "/ask/stream" not in record.getMessage()
-
 logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
-logging.getLogger("uvicorn.access").addFilter(IgnoreStreamFilter())
 
 
 class Query(BaseModel):
+    """
+    Request model for workflow execution.
+    """
+
     query: str
 
 @app.get("/health")
 async def health():
+    """
+    Perform dependency health checks.
 
+    Verifies connectivity to:
+
+    - Ollama
+    - Sandbox service
+    - Qdrant
+    - MySQL
+    - Redis
+
+    Returns:
+        Overall application health and the status of each dependency.
+    """
     try:
         response = requests.get(
             OLLAMA_URL.replace("/generate", "/tags"),
@@ -85,13 +116,25 @@ async def health():
 
 @app.get("/")
 async def home():
+    """
+    Simple endpoint used to verify that the API is running.
+    """
     return {"message": "Zynus is running"}
 
 app.mount("/metrics", make_asgi_app())
 
 @app.post("/run")
 async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
-    
+    """
+    Execute the multi-agent workflow.
+
+    The request passes through the LangGraph workflow and returns the
+    final workflow state.
+
+    Metrics are collected for:
+    - Total workflow executions.
+    - Currently active workflows.
+    """
     try:
         workflow_runs.inc()
         active_workflows.inc()

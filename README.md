@@ -2,141 +2,312 @@
   <img src="./logo.svg" alt="Zynus" width="420">
 </p>
 
-# A multi-agent AI system
-## Built with **LangGraph**, **FastAPI**, **Ollama**, **Qdrant**, **MySQL**, and **Docker**
+---
+
+> **An AI backend that uses multiple AI agents to solve tasks, run code safely, and learn from previous work.**
+
+Zynus receives a task, chooses the right AI agent, runs code in a secure sandbox, fixes errors if needed, and remembers successful solutions to improve future results.
 
 ---
 
-# Architecture
+# Features
 
-```text
-                         ┌────────────┐
-                         │   Router   │
-                         └─────┬──────┘
-                               │
-         ┌─────────────────────┼─────────────────────┐
-         │                     │                     │
-         ▼                     ▼                     ▼
-      QA Route           Research Route        Coding Route
-         │                     │                     │
-         │                     ▼                     ▼
-         │                Researcher          Memory Retriever
-         │                     │                     │
-         │                     ▼                     ▼
-         │                 Responder               Coder
-         │                                           │
-         │                                           ▼
-         │                                        Sandbox
-         │                                           │
-         │                                           ▼
-         │                                        Critic
-         │                                           │
-         │                    ┌──────────────────────┴───────────────┐
-         │                    │                                      │
-         ▼                    ▼                                      ▼
-        END                Success                                Failure
-                               │                                      │
-                               ▼                                      ▼
-                          MySQL + Qdrant                     Retry with feedback
-                                                                      │
-                                                                      ▼
-                                                               Re-execution
-                                                                      │
-                                                                      ▼
-                                                                   Critic
-```
-
----
-
-# Enterprise Features
-
-* Multi-agent orchestration using LangGraph
-* Autonomous task routing
-* Self-repairing execution loop
-* Secure sandboxed code execution
-* Long-term semantic memory
-* Asynchronous background processing with Redis Queue (RQ)
+* Retrieval-augmented-generation (RAG)
+* Web search
+* Redis cache
+* Redis Queue (RQ)
 * Qdrant vector database
-* Health monitoring endpoints
-* Redis-based rate limiting
+* MySQL database
+* Health checks
 * Connection pooling
 * Structured logging
-* Request correlation IDs
-* Alembic database migrations
+* Rate limiting
+* Alembic migrations
 * Dockerized deployment
+* Unit tests with Pytest
+* Prometheus metrics
+* Grafana dashboards
+
 
 ---
 
-# Secure Code Execution
-
-Generated code executes inside an isolated sandbox.
-
-Security mechanisms include:
-
-* Docker isolation
-* Non-root execution
-* Read-only filesystem
-* CPU limits
-* Memory limits
-* Process limits
-* Execution timeout
-* Temporary filesystem cleanup
+# How It Works
 
 ```text
-Generated Code
-      │
-      ▼
- Sandbox API
-      │
-      ▼
- Python Runtime
-      │
-      ▼
- stdout / stderr
+                    ┌────────────────────────────────────┐
+                    │          Client / Frontend         │
+                    └─────────────────┬──────────────────┘
+                                      │
+                                      ▼
+                        ┌─────────────────────────────┐
+                        │        Router Agent         │
+                        └─────────────┬───────────────┘
+                                      │
+             ┌────────────────────────┼────────────────────────┐
+             │                        │                        │
+             ▼                        ▼                        ▼
+      General Question          Research Task            Coding Task
+             │                        │                        │
+             ▼                        ▼                        ▼
+       Direct Response        Research Agent            Memory Retrieval
+                                                               │
+                                                               ▼
+                                                     Redis Memory Cache
+                                                               │
+                          ┌────────────────────────────────────┴─────────────────────────────┐
+                          │                                                                  │
+                     Cache Hit                                                         Cache Miss
+                          │                                                                  │
+                          ▼                                                                  │
+                 Return Cached Context                                                       │
+                                                                                             │
+                                                                                             │
+                                                            ┌────────────────────────────────┘
+                                                            │    
+                                                            │
+                                                  Generate Embedding
+                                                            │
+                                                            ▼
+                                                       Query Qdrant
+                                                            │
+                                                            ▼
+                                                  Top-K Similar Memories
+                                                            │
+                                                            ▼
+                                                  Build Prompt Context
+                                                            │
+                                                            ▼
+                                                     Code Generator
+                                                            │
+                                                            ▼
+                                                       Ollama (LLM)
+                                                            │
+                                                            ▼
+                                                     Generated Code
+                                                            │
+                                                            ▼
+                                                    Sandbox Executor
+                                                            │
+                     ┌──────────────────────────────────────┼────────────────────────────────┐
+                     │                                      │                                │
+                     ▼                                      ▼                                ▼
+                Execution Success                   Runtime / Syntax Er               Sandbox Timeout
+                     │                                      │                                │
+                     └──────────────────────────────────────┼────────────────────────────────┘
+                                                            │
+                                                            ▼
+                                                       Critic Agent
+                                                            │
+                                   ┌────────────────────────┴──────────────────────────┐
+                                   │                                                   │
+                                   ▼                                                   ▼
+                              Output Accepted                                   Needs Improvement
+                                   │                                                   │
+                                   ▼                                                   ▼
+                              Final Response                                     Repair Agent
+                                                                                       │
+                                                                                       ▼
+                                                                                  Ollama (LLM)
+                                                                                       │
+                                                                                       ▼
+                                                                                  Updated Code
+                                                                                       │
+                                                                                       ▼
+                                                                                  Retry Counter
+                                                                                       │
+                                   ┌─────────────────────────┬─────────────────────────┘
+                                   │                         │
+                                   ▼                         ▼
+                              Retry Allowed             Retry Limit Reached
+                                   │                         │
+                                   ▼                         ▼
+                              Sandbox Executor          Fallback Response
+                                   │
+                                   └─────────────────────────────┐
+                                                                 ▼
+                                                       Successful Execution
+                                                                 │
+                                                                 ▼
+                                                     Return Response to Client
+                                                                 │
+                                                                 ▼
+                                                   Background Memory Queue (RQ)
+                                                                 │
+                                                                 ▼
+                                                       Redis Queue (Persistent)
+                                                                 │
+                                                                 ▼
+                                                       Background Worker
+                                                                 │
+                                        ┌────────────────────────┴───────────────────┐
+                                        │                                            │
+                                        ▼                                            ▼
+                              Save Memory Record                             Generate Embedding
+                                        │                                            │
+                                        ▼                                            ▼
+                                   MySQL                                    SentenceTransformer
+                                        │                                            │
+                                        │                                            ▼
+                                        │                                      Upsert Vector
+                                        │
+                                        └─────────────────────►Qdrant
+                                                                 │
+                                                                 ▼
+                                                  Future Semantic Retrieval
 ```
 
-# Health Monitoring
+---
 
-The API exposes health endpoints that verify:
+# Tech Stack
 
-* API availability
-* Database connectivity
-* Sandbox availability
-* LLM availability
+* Python
+* FastAPI
+* LangGraph
+* Ollama
+* Docker
+* Redis
+* MySQL
+* Qdrant
+* SQLAlchemy
+* RQ
+* Prometheus
+* Pytest
 
-Example response:
+---
+
+# Project Structure
+
+```text
+zynus/
+├── agents/
+│   ├── coder.py
+│   ├── critic.py
+│   ├── executor.py
+│   ├── fallback.py
+│   ├── llm.py
+│   ├── memory_agent.py
+│   ├── researcher.py
+│   ├── responder.py
+│   └── router.py
+│
+├── api/
+│   └── server.py
+│
+├── database/
+│   ├── db.py
+│   ├── models.py
+│   └── repository.py
+│
+├── memory/
+│   ├── init_qdrant.py
+│   ├── memory_retriever.py
+│   ├── memory_writer.py
+│   └── qdrantClient.py
+│
+├── middleware/
+│   └── rate_limit.py
+│
+├── migrations/
+│   ├── versions/
+│   ├── env.py
+│   ├── README
+│   └── script.py.mako
+│
+├── observability/
+│   ├── logger.py
+│   └── tracing.py
+│
+├── redis_services/
+│   ├── redis_cache.py
+│   ├── redis_client.py
+│   └── redis_queue.py
+│
+├── sandbox/
+│   ├── Dockerfile
+│   └── server.py
+│
+├── schemas/
+│   ├── critic_schema.py
+│   ├── researcher_schema.py
+│   └── router_schema.py
+│
+├── tools/
+│   ├── rag.py
+│   ├── registry.py
+│   ├── utils.py
+│   └── web_search_tool.py
+│
+├── .dockerignore
+├── .env
+├── .env.local
+├── alembic.ini
+├── config.py
+├── docker-compose.yml
+├── Dockerfile
+├── logo.svg
+├── main.py
+├── prometheus.yml
+└── README.md
+```
+
+---
+
+# Run Locally
+
+Clone the repository:
+
+```bash
+git clone <repository-url>
+cd zynus
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start all services:
+
+```bash
+docker compose up -d
+```
+
+---
+
+# API
+
+**Health**
+
+```http
+GET /health
+```
+
+**Run a task**
+
+```http
+POST /run
+```
 
 ```json
 {
-  "status": "healthy",
-  "database": "up",
-  "sandbox": "up",
-  "ollama": "up"
+  "task": "Write a Python Fibonacci function."
 }
 ```
 
 ---
 
-# Technology Stack
+# Testing
 
-## AI Framework
+```bash
+pytest
+```
 
-* LangGraph
+---
 
-## LLM
+# Future Improvements
 
-* Ollama
+* Kubernetes
+* Distributed agents
 
-## Backend
-
-* FastAPI
-
-## Database
-
-* MySQL
-* SQLAlchemy
-* Alembic
-
-## Vector Database
-
-* Qdrant
+---

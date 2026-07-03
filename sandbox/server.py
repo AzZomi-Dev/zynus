@@ -1,11 +1,42 @@
-from fastapi import FastAPI
+"""
+Sandbox service.
+
+This service executes Python code inside an isolated environment and
+returns the captured standard output and standard error.
+
+Responsibilities:
+- Receive execution requests.
+- Execute Python code with a timeout.
+- Capture stdout and stderr.
+- Clean up temporary files.
+"""
+
+import os
 import subprocess
 import tempfile
-import os
+
+from fastapi import FastAPI
 
 app = FastAPI(title="zynus", version="1.0.3")
 
-async def execute_code(code: str):
+
+async def execute_code(code: str) -> dict:
+    """
+    Execute Python code in a temporary file.
+
+    The source code is written to a temporary file, executed in a
+    separate process, and removed after execution completes.
+
+    Args:
+        code:
+            Python source code.
+
+    Returns:
+        Dictionary containing:
+        - stdout
+        - stderr
+    """
+
     temp_path = None
 
     try:
@@ -13,36 +44,56 @@ async def execute_code(code: str):
             suffix=".py",
             mode="w",
             delete=False,
-            encoding="utf-8"
-        ) as f:
-            f.write(code)
-            temp_path = f.name
+            encoding="utf-8",
+        ) as file:
+            file.write(code)
+            temp_path = file.name
 
         result = subprocess.run(
-            ["python", temp_path], 
-            capture_output=True, 
+            ["python", temp_path],
+            capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
+
         return {
-            "stdout": result.stdout, 
-            "stderr": result.stderr
+            "stdout": result.stdout,
+            "stderr": result.stderr,
         }
+
     except subprocess.TimeoutExpired:
         return {
             "stdout": "",
-            "stderr": "Execution timed out"
+            "stderr": "Execution timed out",
         }
 
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
-    
+
+
 @app.get("/")
 async def home():
-    return {"message": "zynus-sandbox is running"}
+    """
+    Health endpoint for the sandbox service.
+    """
+
+    return {
+        "message": "zynus-sandbox is running",
+    }
+
 
 @app.post("/execute")
 async def execute(payload: dict):
-    result = await execute_code(payload["code"])
-    return result
+    """
+    Execute submitted Python code.
+
+    Args:
+        payload:
+            Request body containing the "code" field.
+
+    Returns:
+        Execution result produced by the sandbox.
+    """
+
+    return await execute_code(payload["code"])
