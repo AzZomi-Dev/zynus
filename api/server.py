@@ -6,6 +6,7 @@ from database.db import SessionLocal
 from sqlalchemy import text
 from middleware.rate_limit import rate_limit_dependency
 from redis_services.redis_client import redis_conn
+from observability.metrics import workflow_runs, active_workflows
 import requests
 
 app = FastAPI(title="zynus", version="1.0.3")
@@ -75,7 +76,12 @@ async def home():
 @app.post("/run")
 async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
     
-    query = request.query
-    result = await graph_builder.ainvoke(build_initial_state(query))
-    
-    return result
+    try:
+        workflow_runs.inc()
+        active_workflows.inc()
+        query = request.query
+        result = await graph_builder.ainvoke(build_initial_state(query))
+        
+        return result
+    finally:
+        active_workflows.dec()
