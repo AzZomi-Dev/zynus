@@ -6,10 +6,24 @@ from database.db import SessionLocal
 from sqlalchemy import text
 from middleware.rate_limit import rate_limit_dependency
 from redis_services.redis_client import redis_conn
+from prometheus_client import make_asgi_app
 from observability.metrics import workflow_runs, active_workflows
+import logging
 import requests
 
 app = FastAPI(title="zynus", version="1.0.3")
+
+class IgnoreMetricsFilter(logging.Filter):
+    def filter(self, record):
+        return "/metrics" not in record.getMessage()
+
+class IgnoreStreamFilter(logging.Filter):
+    def filter(self, record):
+        return "/ask/stream" not in record.getMessage()
+
+logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
+logging.getLogger("uvicorn.access").addFilter(IgnoreStreamFilter())
+
 
 class Query(BaseModel):
     query: str
@@ -72,6 +86,8 @@ async def health():
 @app.get("/")
 async def home():
     return {"message": "Zynus is running"}
+
+app.mount("/metrics", make_asgi_app())
 
 @app.post("/run")
 async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
