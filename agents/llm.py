@@ -12,24 +12,31 @@ def ask_llm(prompt: str):
     }
     print(payload)
     llm_requests.inc()
-    response = requests.post(OLLAMA_URL, json=payload, stream=True)
+    for attempt in range(4):
+        try:
+            response = requests.post(OLLAMA_URL, json=payload, stream=True)
 
-    full = ""
-    for line in response.iter_lines():
-        if not line:
-            continue
-        
-        data = json.loads(line.decode("utf-8"))
-        token = data.get("response", "")
+            full = ""
+            for line in response.iter_lines():
+                if not line:
+                    continue
+                
+                data = json.loads(line.decode("utf-8"))
+                token = data.get("response", "")
 
-        print(token, end="", flush=True)
-        full += token
-        
-        if data.get("done"):
-            break
-    
-    llm_latency.observe(time.time() - start)
-    return full
+                print(token, end="", flush=True)
+                full += token
+                
+                if data.get("done"):
+                    break
+            
+            llm_latency.observe(time.time() - start)
+            return full
+        except requests.RequestException:
+            if attempt == 3:
+                raise
+            print(f"ERROR, Retrying .. Attempt: {attempt}")
+            time.sleep(2 ** attempt)
 
 def ask_llm_json(prompt: str):
     response = ask_llm(prompt)
