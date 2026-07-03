@@ -93,7 +93,28 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus
+    container_name: zynus-prometheus
+    ports:
+      - "9091:9090"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana
+    container_name: zynus-grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+
 volumes:
   mysql_data:
   qdrant_data:
+  prometheus_data:
+  grafana_data:
   hf_cache:
