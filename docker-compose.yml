@@ -25,6 +25,19 @@ services:
       - redis
       - qdrant
 
+  ollama:
+    image: ollama/ollama
+    container_name: zynus-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    security_opt:
+      - seccomp=unconfined
+    networks:
+      - default
+
   rq:
     build: .
     container_name: zynus-rq
@@ -144,6 +157,7 @@ networks:
 
 volumes:
   mysql_data:
+  ollama_data:
   qdrant_data:
   prometheus_data:
   grafana_data:
