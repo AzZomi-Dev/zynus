@@ -1,0 +1,14 @@
+[
+    {
+        "task": "Write Python code that computes fibonacci(10) and prints only the result",
+        "expected": "55"
+    },
+    {
+        "task": "Write Python code to sort the list [3, 1, 2] in ascending order",
+        "expected": "[1, 2, 3]"
+    },
+    {
+        "task": "Write Python code to reverse this string: hello",
+        "expected": "olleh"
+    }
+]
