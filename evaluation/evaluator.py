@@ -1,3 +1,28 @@
+"""
+Benchmark the agent on a fixed evaluation dataset.
+
+For each benchmark task, the evaluation pipeline:
+1. Executes the graph.
+2. Measures execution latency.
+3. Checks whether the produced output matches the expected answer.
+4. Computes Pass@k metrics (Pass@1, Pass@3, Pass@5), indicating whether
+   the task was solved within the first k attempts.
+5. Stores per-task metrics.
+
+Finally, aggregate statistics are reported, including:
+- Success rate
+- Pass@1
+- Pass@3
+- Pass@5
+- Average latency
+- Average retries
+
+Pass@k is used to evaluate the effectiveness of the retry mechanism. By
+comparing Pass@k values, you can determine whether allowing additional
+retries meaningfully improves performance or simply increases latency and
+cost. This helps guide the choice of the retry budget (GRAPH_RETRIES).
+"""
+
 import json
 import time
 from main import graph_builder, build_initial_state
