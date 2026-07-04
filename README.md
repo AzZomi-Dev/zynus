@@ -267,14 +267,29 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Start all services:
+### Environment Variables
+
+Create these two files in the project root:
+
+- **`.env`** – Used when running the project with Docker.
+- **`.env.local`** – Used when running the project directly with Python (e.g. `uvicorn`).
+
+Fill both files with the required URLs and database settings.
+
+## Run with Docker
 
 ```bash
 docker compose up -d
 ```
 
----
+## Run without Docker
 
+
+```bash
+uvicorn api.server:app --reload
+```
+
+---
 # API
 
 **Health**
