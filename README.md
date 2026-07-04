@@ -276,7 +276,7 @@ MYSQL_ROOT_PASSWORD=123
 MYSQL_DATABASE=zynusdb
 DATABASE_URL=mysql+pymysql://root:123@mysql:3306/zynusdb
 
-OLLAMA_URL=http://host.docker.internal:11434/api/generate
+OLLAMA_URL=http://ollama:11434/api/generate
 SANDBOX_URL=http://sandbox:7070/execute
 QDRANT_URL=http://qdrant:6333
 REDIS_URL=redis://redis:6379/0
