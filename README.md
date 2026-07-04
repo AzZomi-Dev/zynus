@@ -267,46 +267,66 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-### Environment Variables
+Configure the environment varibles by creating the following files in the project root.
 
-Create these two files in the project root:
+### `.env`
 
-- **`.env`** – Used when running the project with Docker.
-- **`.env.local`** – Used when running the project directly with Python (e.g. `uvicorn`).
+```env
+MYSQL_ROOT_PASSWORD=123
+MYSQL_DATABASE=zynusdb
+DATABASE_URL=mysql+pymysql://root:123@mysql:3306/zynusdb
 
-Fill both files with the required URLs and database settings.
+OLLAMA_URL=http://host.docker.internal:11434/api/generate
+SANDBOX_URL=http://sandbox:7070/execute
+QDRANT_URL=http://qdrant:6333
+REDIS_URL=redis://redis:6379/0
+```
 
-## Run with Docker
+### `.env.local`
+
+```env
+MYSQL_ROOT_PASSWORD=123
+MYSQL_DATABASE=zynusdb
+DATABASE_URL=mysql+pymysql://root:123@localhost:3306/zynusdb
+
+OLLAMA_URL=http://localhost:11434/api/generate
+SANDBOX_URL=http://localhost:7070/execute
+QDRANT_URL=http://localhost:6333
+REDIS_URL=redis://localhost:6379/0
+```
+
+> **Note:** These values are examples. Update them to match your setup
+
+Run with Docker
 
 ```bash
 docker compose up -d
 ```
 
-## Run without Docker
+Run without Docker
 
 
 ```bash
 uvicorn api.server:app --reload
 ```
 
----
-# API
-
-**Health**
+Check health:
 
 ```http
-GET /health
+http://localhost:8000/health
 ```
 
-**Run a task**
+Open the interactive API documentation:
 
-```http
-POST /run
 ```
+http://localhost:8000/docs
+```
+
+Example POST request for the `/run` endpoint:
 
 ```json
 {
-  "task": "Write a Python Fibonacci function."
+  "query": "Write a Python Fibonacci function."
 }
 ```
 
@@ -314,8 +334,36 @@ POST /run
 
 # Testing
 
+Run the tests to make sure the sandbox:
+
+- Runs Python code correctly
+- Stops code that runs forever
+
 ```bash
 pytest
+```
+
+---
+
+# Benchmarking and Evaluation
+
+Built-in evaluation suite measures:
+
+- Success Rate
+- Pass@k
+- Latency
+- Retry Count
+
+Run benchmark:
+
+```bash
+python -m evals.evaluator
+```
+
+Run regression suite:
+
+```bash
+python -m evals.regression_suite
 ```
 
 ---
