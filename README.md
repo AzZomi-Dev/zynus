@@ -338,6 +338,7 @@ Run the tests to make sure the sandbox:
 
 - Runs Python code correctly
 - Stops code that runs forever
+- Blocks internet access
 
 ```bash
 pytest
