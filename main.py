@@ -220,14 +220,14 @@ def critic_node(state):
         state["retries"]
     )
 
-    # SUCCESS 
-
     if success:
         logger.info(
             "execution_success", 
             trace_id=state["trace_id"]
         )
 
+        # Persist only repaired solutions to build a knowledge base of
+        # previously resolved failures.
         if state["had_initial_error"]:
             record = {
                 "query": state["query"],
@@ -243,10 +243,11 @@ def critic_node(state):
 
             embed_and_upsert_memory(record, state["trace_id"])
             
-    # FAILURE
-
     else:
         state["had_initial_error"] = True
+
+        # Preserve the first execution error so repaired solutions can be
+        # associated with their original failure.
         if state["retries"] == 0:
             state["initial_error"] = state["error"]
             
