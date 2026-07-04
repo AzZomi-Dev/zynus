@@ -1,3 +1,11 @@
+"""
+Regression test runner.
+
+This script executes the regression evaluation suite, reports its output,
+and measures the total execution time. It is intended as a convenience
+wrapper for running the project's automated regression tests.
+"""
+
 import time
 import subprocess
 import sys
