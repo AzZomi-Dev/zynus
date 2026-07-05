@@ -17,7 +17,7 @@ import tempfile
 
 from fastapi import FastAPI
 
-app = FastAPI(title="zynus", version="1.0.4")
+app = FastAPI(title="zynus", version="1.0.5")
 
 
 async def execute_code(code: str) -> dict:
