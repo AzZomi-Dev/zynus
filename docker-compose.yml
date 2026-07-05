@@ -17,6 +17,26 @@ services:
     volumes:
       - .:/app
       - hf_cache:/root/.cache/huggingface
+    networks:
+      - default
+      - isolated-net
+    depends_on:
+      - mysql
+      - redis
+      - qdrant
+
+  ollama:
+    image: ollama/ollama
+    container_name: zynus-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    security_opt:
+      - seccomp=unconfined
+    networks:
+      - default
 
   rq:
     build: .
@@ -31,8 +51,14 @@ services:
     restart: unless-stopped
     volumes:
       - .:/app
-      - hf_cache
-    
+      - hf_cache:/root/.cache/huggingface
+    networks:
+      - default
+      - isolated-net
+    depends_on:
+      - redis
+      - mysql
+
   mysql:
     image: mysql:5.5
     container_name: zynus-mysql
@@ -44,6 +70,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - default
 
   sandbox:
     build:
@@ -72,6 +100,8 @@ services:
           cpus: "0.5"
           memory: 256M
     restart: unless-stopped
+    networks:
+      - isolated-net
 
   qdrant:
     image: qdrant/qdrant
@@ -85,6 +115,8 @@ services:
     restart: unless-stopped
     volumes:
       - qdrant_data:/qdrant/storage
+    networks:
+      - default
 
   redis:
     image: redis:7-alpine
@@ -92,6 +124,8 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    networks:
+      - default
 
   prometheus:
     image: prom/prometheus
@@ -102,6 +136,8 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
+    networks:
+      - default
 
   grafana:
     image: grafana/grafana
@@ -111,9 +147,17 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
+    networks:
+      - default
+
+networks:
+  isolated-net:
+    driver: bridge
+    internal: true
 
 volumes:
   mysql_data:
+  ollama_data:
   qdrant_data:
   prometheus_data:
   grafana_data:
