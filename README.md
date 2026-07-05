@@ -158,20 +158,46 @@ Zynus receives a task, chooses the right AI agent, runs code in a secure sandbox
 
 ---
 
-# Tech Stack
+# The Flow
 
-* Python
-* FastAPI
-* LangGraph
-* Ollama
-* Docker
-* Redis
-* MySQL
-* Qdrant
-* SQLAlchemy
-* RQ
-* Prometheus
-* Pytest
+## 1. Receive a Task
+
+A user sends a request to the API.
+
+```text
+POST /run
+```
+
+Example:
+
+```text
+Write Python code that computes fibonacci(10)
+```
+
+---
+
+## 2. Route the Task
+
+The Router Agent decides where the request should go.
+
+```text
+           Task
+             │
+             ▼
+      Router Agent
+             │
+   ┌─────────┼─────────┐
+   ▼         ▼         ▼
+  QA     Research    Coding
+```
+
+**Why?:** Different tasks require different agents. Routing avoids using the wrong workflow.
+
+**Examples:**
+
+- "What is Python?" → **QA** (general question)
+- "What are today's top news headlines?" → **Research** (requires web search)
+- "Write Python code to print 'Hello, World!'" → **Coding**
 
 ---
 
@@ -366,6 +392,23 @@ Run regression suite:
 ```bash
 python -m evals.regression_suite
 ```
+
+---
+
+# Tech Stack
+
+* Python
+* FastAPI
+* LangGraph
+* Ollama
+* Docker
+* Redis
+* MySQL
+* Qdrant
+* SQLAlchemy
+* RQ
+* Prometheus
+* Pytest
 
 ---
 
