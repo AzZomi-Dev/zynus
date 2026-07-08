@@ -15,15 +15,17 @@ Configuration includes:
 
 import os
 from dotenv import load_dotenv
-load_dotenv(".env.local")
+load_dotenv(".env.local", override=False)
 
 ENTRYPOINT = "router"
 DEBUG_MODE = False
 MODE = "fixed" # fall | fixed
 
-MODEL = "gemma3:1b"
-EMB_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+EMB_MODEL = os.getenv("EMB_MODEL")
 
+MODEL = os.getenv("MODEL")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER") # ollama | groq
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OLLAMA_URL = os.getenv("OLLAMA_URL")
 SANDBOX_URL = os.getenv("SANDBOX_URL")
 QDRANT_URL = os.getenv("QDRANT_URL")

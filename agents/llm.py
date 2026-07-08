@@ -1,5 +1,5 @@
 """
-LLM client for communicating with the Ollama server.
+LLM client for communicating with the Ollama/Groq server.
 
 This module provides a reusable HTTP session with connection pooling,
 automatic retry logic, streaming response handling, and Prometheus metrics.
@@ -19,7 +19,8 @@ import time
 import requests
 from requests.adapters import HTTPAdapter
 
-from config import MODEL, OLLAMA_URL
+from groq import Groq
+from config import MODEL, OLLAMA_URL, GROQ_API_KEY, LLM_PROVIDER
 from observability.metrics import llm_latency, llm_requests
 
 # ---------------------------------------------------------------------
@@ -28,6 +29,8 @@ from observability.metrics import llm_latency, llm_requests
 # Using a single Session enables HTTP keep-alive and connection pooling,
 # reducing latency and avoiding unnecessary TCP/TLS handshakes.
 # ---------------------------------------------------------------------
+
+groq_client = Groq(api_key=GROQ_API_KEY)
 
 session = requests.Session()
 
@@ -40,9 +43,9 @@ session.mount("http://", adapter)
 session.mount("https://", adapter)
 
 
-def ask_llm(prompt: str) -> str:
+def ask_ollama(prompt: str) -> str:
     """
-    Send a prompt to the configured LLM and stream the generated response.
+    Send a prompt to Ollama and stream the generated response.
 
     Features:
     - HTTP connection pooling
@@ -121,6 +124,64 @@ def ask_llm(prompt: str) -> str:
             # 1s → 2s → 4s
             time.sleep(2 ** attempt)
 
+def ask_groq(prompt: str) -> str:
+    """
+    Send a prompt to Groq and stream the generated response.
+
+    Features:
+    - Streaming token generation
+    - Automatic retries with exponential backoff
+    - Prometheus request counting
+    - Prometheus latency measurement
+    """
+    start = time.time()
+    
+    llm_requests.inc()
+
+    payload = {
+        "model": MODEL,
+        "messages": [{
+            "role": "user",
+            "content": prompt
+        }],
+        "stream": True
+    }
+    print(payload)
+    
+    for attempt in range(4):
+        try:
+            stream = groq_client.chat.completions.create(**payload)
+            full = ""
+
+            for chunk in stream:
+
+                token = chunk.choices[0].delta.content or ""
+
+                print(token, end="", flush=True)
+
+                full += token
+
+            llm_latency.observe(time.time() - start)
+
+            return full
+
+        except Exception:
+
+            if attempt == 3:
+                raise
+
+            print(f"ERROR, Retrying .. Attempt: {attempt}")
+
+            time.sleep(2 ** attempt)
+
+def ask_llm(prompt: str):
+    if LLM_PROVIDER == "ollama":
+        return ask_ollama(prompt)
+    
+    if LLM_PROVIDER == "groq":
+        return ask_groq(prompt)
+
+    raise ValueError(f"Unsupported LLM provider: {LLM_PROVIDER}")
 
 def ask_llm_json(prompt: str):
     """
