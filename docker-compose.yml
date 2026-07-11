@@ -8,6 +8,9 @@ services:
     ports:
       - "8000:8000"
     environment:
+      MODEL: ${MODEL}
+      LLM_PROVIDER: ${LLM_PROVIDER}
+      GROQ_API_KEY: ${GROQ_API_KEY}
       OLLAMA_URL: ${OLLAMA_URL}
       DATABASE_URL: ${DATABASE_URL}
       SANDBOX_URL: ${SANDBOX_URL}
