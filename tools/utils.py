@@ -17,8 +17,7 @@ def get_embeddings():
             return _embeddings
         
         _embeddings = HuggingFaceEmbeddings(
-            model_name=EMB_MODEL,
-            model_kwargs={"local_files_only": True}
+            model_name=EMB_MODEL
         )
         return _embeddings
     
