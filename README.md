@@ -80,7 +80,7 @@ Zynus receives a task, chooses the right AI agent, runs code in a secure sandbox
                                                      Code Generator
                                                             │
                                                             ▼
-                                                       Ollama (LLM)
+                                                      Ollama/Groq (LLM)
                                                             │
                                                             ▼
                                                      Generated Code
@@ -107,7 +107,7 @@ Zynus receives a task, chooses the right AI agent, runs code in a secure sandbox
                               Final Response                                     Repair Agent
                                                                                        │
                                                                                        ▼
-                                                                                  Ollama (LLM)
+                                                                                 Ollama/Groq (LLM)
                                                                                        │
                                                                                        ▼
                                                                                   Updated Code
@@ -302,6 +302,11 @@ MYSQL_ROOT_PASSWORD=123
 MYSQL_DATABASE=zynusdb
 DATABASE_URL=mysql+pymysql://root:123@mysql:3306/zynusdb
 
+MODEL=llama-3.1-8b-instant
+EMB_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+LLM_PROVIDER=groq
+GROQ_API_KEY=your_groq_api_key
+
 OLLAMA_URL=http://ollama:11434/api/generate
 SANDBOX_URL=http://sandbox:7070/execute
 QDRANT_URL=http://qdrant:6333
@@ -315,13 +320,20 @@ MYSQL_ROOT_PASSWORD=123
 MYSQL_DATABASE=zynusdb
 DATABASE_URL=mysql+pymysql://root:123@localhost:3306/zynusdb
 
+MODEL=gemma3:1b
+EMB_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+LLM_PROVIDER=ollama
+GROQ_API_KEY=None
+
 OLLAMA_URL=http://localhost:11434/api/generate
 SANDBOX_URL=http://localhost:7070/execute
 QDRANT_URL=http://localhost:6333
 REDIS_URL=redis://localhost:6379/0
 ```
 
-> **Note:** These values are examples. Update them to match your setup
+> **Important:** These values are examples. Update them to match your setup.
+>
+> **Note:** Set `LLM_PROVIDER` to `groq` or `ollama` depending on which model provider you want to use. If using Groq, provide a valid `GROQ_API_KEY`.
 
 Run with Docker
 
@@ -400,6 +412,7 @@ python -m evals.regression_suite
 * Python
 * FastAPI
 * LangGraph
+* Groq
 * Ollama
 * Docker
 * Redis
@@ -408,6 +421,7 @@ python -m evals.regression_suite
 * SQLAlchemy
 * RQ
 * Prometheus
+* Grafana
 * Pytest
 
 ---
