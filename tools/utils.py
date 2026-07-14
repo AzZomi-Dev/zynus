@@ -1,25 +1,13 @@
-from langchain_huggingface import HuggingFaceEmbeddings
-from config import EMB_MODEL
-import threading
+from providers.embeddings.hf import get_huggingface_embeddings
+from providers.embeddings.google import get_google_embeddings
+from config import EMB_MODEL_PROVIDER
 import re
 
-_embeddings: HuggingFaceEmbeddings | None = None
-_emb_lock = threading.Lock()
-
 def get_embeddings():
-    global _embeddings
-
-    if _embeddings is not None:
-        return _embeddings
-
-    with _emb_lock:
-        if _embeddings is not None:
-            return _embeddings
-        
-        _embeddings = HuggingFaceEmbeddings(
-            model_name=EMB_MODEL
-        )
-        return _embeddings
+    if EMB_MODEL_PROVIDER == "google":
+        return get_google_embeddings()
+    if EMB_MODEL_PROVIDER == "huggingface":
+        return get_huggingface_embeddings()
     
 def extract_code(code):
     pattern = r"```python3?\n(?P<code>(?:.|\n)*?)```"

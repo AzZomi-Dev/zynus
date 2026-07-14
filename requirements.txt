@@ -1,6 +1,6 @@
 anyio
 groq
-google-genai
+langchain-google-genai
 qdrant_client
 redis
 rq

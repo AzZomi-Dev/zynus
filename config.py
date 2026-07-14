@@ -22,6 +22,7 @@ DEBUG_MODE = False
 MODE = "fixed" # fall | fixed
 
 EMB_MODEL = os.getenv("EMB_MODEL")
+EMB_MODEL_PROVIDER = os.getenv("EMB_MODEL_PROVIDER") # google | huggingface
 
 MODEL = os.getenv("MODEL")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER") # ollama | groq
