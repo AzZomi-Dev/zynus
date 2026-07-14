@@ -81,8 +81,8 @@ services:
 
   sandbox:
     build:
-      context: .
-      dockerfile: sandbox/Dockerfile
+      context: ./sandbox
+      dockerfile: Dockerfile
     container_name: zynus-sandbox
     ports:
       - "7070:7070"
