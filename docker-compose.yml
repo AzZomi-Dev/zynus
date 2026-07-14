@@ -9,7 +9,10 @@ services:
       - "8000:8000"
     environment:
       MODEL: ${MODEL}
+      EMB_MODEL: ${EMB_MODEL}
+      EMB_MODEL_PROVIDER: ${EMB_MODEL_PROVIDER}
       LLM_PROVIDER: ${LLM_PROVIDER}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY}
       OLLAMA_URL: ${OLLAMA_URL}
       DATABASE_URL: ${DATABASE_URL}

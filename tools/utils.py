@@ -1,25 +1,50 @@
-from langchain_huggingface import HuggingFaceEmbeddings
-from config import EMB_MODEL
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from config import EMB_MODEL, EMB_MODEL_PROVIDER
 import threading
 import re
 
-_embeddings: HuggingFaceEmbeddings | None = None
 _emb_lock = threading.Lock()
 
 def get_embeddings():
-    global _embeddings
+    if EMB_MODEL_PROVIDER == "google":
+        return get_google_embeddings()
+    if EMB_MODEL_PROVIDER == "huggingface":
+        return get_huggingface_embeddings()
 
-    if _embeddings is not None:
-        return _embeddings
+_hf_embeddings: HuggingFaceEmbeddings | None = None
+
+def get_huggingface_embeddings():
+    global _hf_embeddings
+
+    if _hf_embeddings is not None:
+        return _hf_embeddings
 
     with _emb_lock:
-        if _embeddings is not None:
-            return _embeddings
+        if _hf_embeddings is not None:
+            return _hf_embeddings
         
-        _embeddings = HuggingFaceEmbeddings(
+        _hf_embeddings = HuggingFaceEmbeddings(
             model_name=EMB_MODEL
         )
-        return _embeddings
+        return _hf_embeddings
+
+_google_embeddings: GoogleGenerativeAIEmbeddings | None = None
+
+def get_google_embeddings():
+    global _google_embeddings
+
+    if _google_embeddings is not None:
+        return _google_embeddings
+
+    with _emb_lock:
+        if _google_embeddings is not None:
+            return _google_embeddings
+        
+        _google_embeddings = GoogleGenerativeAIEmbeddings(
+            model=EMB_MODEL
+        )
+        return _google_embeddings
     
 def extract_code(code):
     pattern = r"```python3?\n(?P<code>(?:.|\n)*?)```"
