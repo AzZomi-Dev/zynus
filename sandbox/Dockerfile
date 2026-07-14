@@ -2,9 +2,9 @@ FROM python:3.10-slim-bullseye
 
 WORKDIR /app
 
-RUN pip install fastapi uvicorn
+RUN pip install fastapi uvicorn pytest
 
-COPY sandbox/server.py .
+COPY server.py .
 
 RUN useradd -m sandboxuser
 
