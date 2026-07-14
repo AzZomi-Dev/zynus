@@ -23,6 +23,7 @@ from sqlalchemy import text
 from middleware.rate_limit import rate_limit_dependency
 from redis_services.redis_client import redis_conn
 from prometheus_client import make_asgi_app
+from memory.qdrantClient import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
 import logging
 import requests
@@ -82,11 +83,9 @@ async def health():
         sandbox_ok = False
 
     try:
-        response = requests.get(
-            QDRANT_URL,
-            timeout=3
-        )
-        qdrant_ok = response.status_code == 200
+        qdrant_client = get_qdrant_client()
+        qdrant_client.get_collections()
+        qdrant_ok = True
     except Exception:
         qdrant_ok = False
 
