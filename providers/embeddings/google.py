@@ -1,4 +1,5 @@
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from config import EMB_MODEL
 import threading
 
 _emb_lock = threading.Lock()
