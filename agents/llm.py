@@ -13,8 +13,8 @@ Responsibilities:
 - Parse JSON responses when required.
 """
 
-from agents.llms.ollama import ask_ollama
-from agents.llms.groq import ask_groq
+from providers.llms.ollama import ask_ollama
+from providers.llms.groq import ask_groq
 
 import json
 from config import LLM_PROVIDER
