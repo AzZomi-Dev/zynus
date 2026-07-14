@@ -310,6 +310,7 @@ EMB_MODEL=models/gemini-embedding-001
 
 GEMINI_API_KEY=your_gemini_api_key
 GROQ_API_KEY=your_groq_api_key
+QDRANT_API_KEY=your_qdrant_api_key
 
 OLLAMA_URL=None
 SANDBOX_URL=http://sandbox:7070/execute
@@ -332,6 +333,7 @@ EMB_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 
 GEMINI_API_KEY=None
 GROQ_API_KEY=None
+QDRANT_API_KEY=None
 
 OLLAMA_URL=http://localhost:11434/api/generate
 SANDBOX_URL=http://localhost:7070/execute
@@ -341,12 +343,12 @@ REDIS_URL=redis://localhost:6379/0
 
 > **Important:** These values are examples. Update them to match your setup.
 >
-> **Note:** Set `LLM_PROVIDER` to `groq` or `ollama`, and `EMB_MODEL_PROVIDER` to `google` or `huggingface` depending on the providers you want to use.
+> **Note:** Set `LLM_PROVIDER` to `groq` or `ollama`, and `EMB_MODEL_PROVIDER` to `google` or `huggingface` depending on the providers you want.
 >
 > - If using **Groq**, create an API key from https://console.groq.com/keys and set `GROQ_API_KEY`.
 > - If using **Google Gemini embeddings**, create an API key from https://aistudio.google.com/app/apikey and set `GEMINI_API_KEY`.
-> - If using **Ollama** or **Hugging Face embeddings**, no API key is required.
-
+> - If using **Qdrant Cloud**, create a cluster at https://cloud.qdrant.io, generate an API key, and set `QDRANT_URL` and `QDRANT_API_KEY`.
+> - If using **Ollama**, **Hugging Face embeddings**, or a local **Qdrant** instance, no API keys are required.
 Run with Docker
 
 ```bash

@@ -19,6 +19,7 @@ services:
       SANDBOX_URL: ${SANDBOX_URL}
       REDIS_URL: ${REDIS_URL}
       QDRANT_URL: ${QDRANT_URL}
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
     restart: unless-stopped
     volumes:
       - .:/app
@@ -49,11 +50,18 @@ services:
     container_name: zynus-rq
     command: rq worker memory-write
     environment:
+      MODEL: ${MODEL}
+      EMB_MODEL: ${EMB_MODEL}
+      EMB_MODEL_PROVIDER: ${EMB_MODEL_PROVIDER}
+      LLM_PROVIDER: ${LLM_PROVIDER}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
       OLLAMA_URL: ${OLLAMA_URL}
       DATABASE_URL: ${DATABASE_URL}
       SANDBOX_URL: ${SANDBOX_URL}
       REDIS_URL: ${REDIS_URL}
       QDRANT_URL: ${QDRANT_URL}
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
     restart: unless-stopped
     volumes:
       - .:/app
@@ -62,8 +70,9 @@ services:
       - default
       - isolated-net
     depends_on:
-      - redis
       - mysql
+      - redis
+      - qdrant
 
   mysql:
     image: mysql:5.5
