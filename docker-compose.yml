@@ -19,6 +19,7 @@ services:
       SANDBOX_URL: ${SANDBOX_URL}
       REDIS_URL: ${REDIS_URL}
       QDRANT_URL: ${QDRANT_URL}
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
     restart: unless-stopped
     volumes:
       - .:/app
