@@ -17,12 +17,13 @@ Responsibilities:
 from fastapi import FastAPI, Depends
 from main import graph_builder, build_initial_state
 from pydantic import BaseModel
-from config import OLLAMA_URL, SANDBOX_URL, QDRANT_URL
+from config import OLLAMA_URL, SANDBOX_URL, LLM_PROVIDER
 from database.db import SessionLocal
 from sqlalchemy import text
 from middleware.rate_limit import rate_limit_dependency
 from redis_services.redis_client import redis_conn
 from prometheus_client import make_asgi_app
+from providers.llms.groq import groq_client
 from memory.qdrantClient import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
 import logging
@@ -54,24 +55,29 @@ async def health():
 
     Verifies connectivity to:
 
-    - Ollama
+    - LLM
     - Sandbox service
     - Qdrant
-    - MySQL
+    - Database
     - Redis
 
     Returns:
         Overall application health and the status of each dependency.
     """
     try:
-        response = requests.get(
-            OLLAMA_URL.replace("/generate", "/tags"),
-            timeout=3
-        )
-        ollama_ok = response.status_code == 200
-
+        if LLM_PROVIDER == "ollama":
+            response = requests.get(
+                OLLAMA_URL.replace("/generate", "/tags"),
+                timeout=3
+            )
+            llm_ok = response.status_code == 200
+        elif LLM_PROVIDER == "groq":
+            groq_client.models.list()
+            llm_ok = True
+        else:
+            llm_ok = False
     except Exception:
-        ollama_ok = False
+        llm_ok = False
 
     try:
         response = requests.get(
@@ -92,9 +98,9 @@ async def health():
     try:
         db = SessionLocal()
         db.execute(text("SELECT 1"))
-        mysql_ok = True
+        database_ok = True
     except Exception:
-        mysql_ok = False
+        database_ok = False
     finally:
         db.close()
 
@@ -105,11 +111,11 @@ async def health():
         redis_ok = False
 
     return {
-        "status": "healthy" if ollama_ok and sandbox_ok and qdrant_ok and mysql_ok and redis_ok else "degraded",
-        "ollama": "up" if ollama_ok else "down",
+        "status": "healthy" if llm_ok and sandbox_ok and qdrant_ok and database_ok and redis_ok else "degraded",
+        "llm": "up" if llm_ok else "down",
         "sandbox": "up" if sandbox_ok else "down",
         "qdrant": "up" if qdrant_ok else "down",
-        "mysql": "up" if mysql_ok else "down",
+        "database": "up" if database_ok else "down",
         "redis": "up" if redis_ok else "down"
     }
 
