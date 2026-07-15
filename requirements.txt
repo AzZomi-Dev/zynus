@@ -5,6 +5,7 @@ qdrant_client
 redis
 rq
 alembic
+psycopg2-binary
 duckduckgo_search
 fastapi
 huggingface_hub
