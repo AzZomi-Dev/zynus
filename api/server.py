@@ -10,11 +10,16 @@ Responsibilities:
 - Expose REST endpoints.
 - Perform dependency health checks.
 - Execute workflow requests.
-- Expose Prometheus metrics.
+- Expose Prometheus metrics protected by Basic Authentication.
 - Apply request rate limiting.
 """
 
-from fastapi import FastAPI, Depends, HTTPException, status
+import os
+import secrets
+import logging
+import requests
+
+from fastapi import FastAPI, Depends, HTTPException, status, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from main import graph_builder, build_initial_state
 from pydantic import BaseModel
@@ -23,17 +28,14 @@ from database.db import SessionLocal
 from sqlalchemy import text
 from middleware.rate_limit import rate_limit_dependency
 from redis_services.redis_client import redis_conn
-from prometheus_client import make_asgi_app
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from providers.llms.groq import groq_client
 from memory.qdrantClient import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
-import logging
-import requests
-import secrets
-import os
 
 app = FastAPI(title="zynus", version="1.0.5")
 
+# --- Basic Auth Security Setup ---
 security = HTTPBasic()
 
 METRICS_USER = os.getenv("METRICS_USER", "metrics_user")
@@ -72,7 +74,6 @@ async def health():
     Perform dependency health checks.
 
     Verifies connectivity to:
-
     - LLM
     - Sandbox service
     - Qdrant
@@ -125,7 +126,7 @@ async def health():
     try:
         redis_conn.ping()
         redis_ok = True
-    except Exception as e:
+    except Exception:
         redis_ok = False
 
     return {
@@ -144,7 +145,12 @@ async def home():
     """
     return {"message": "Zynus is running"}
 
-app.mount("/metrics", make_asgi_app())
+@app.get("/metrics", dependencies=[Depends(verify_metrics_credentials)])
+async def metrics_endpoint():
+    """
+    Expose Prometheus metrics protected by Basic Authentication.
+    """
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 @app.post("/run")
 async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
