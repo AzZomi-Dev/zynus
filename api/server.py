@@ -32,6 +32,7 @@ from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from providers.llms.groq import groq_client
 from memory.qdrantClient import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
+from api.routes.stream import router as stream_router
 
 app = FastAPI(title="zynus", version="1.0.5")
 
@@ -58,8 +59,15 @@ class IgnoreMetricsFilter(logging.Filter):
     def filter(self, record):
         return "/metrics" not in record.getMessage()
 
-logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
+class IgnoreStreamFilter(logging.Filter):
+    def filter(self, record):
+        return "/ask/stream" not in record.getMessage()
 
+logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
+logging.getLogger("uvicorn.access").addFilter(IgnoreStreamFilter())
+
+
+app.include_router(stream_router)
 
 class Query(BaseModel):
     """
@@ -168,8 +176,13 @@ async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
         workflow_runs.inc()
         active_workflows.inc()
         query = request.query
-        result = await graph_builder.ainvoke(build_initial_state(query))
+        initial_state = build_initial_state(query)
+        initial_state["trace_id"] = request.trace_id
+        result = await graph_builder.ainvoke(initial_state)
         
-        return result
+        return {
+            "trace_id": initial_state["trace_id"],
+            "result": result
+        }
     finally:
         active_workflows.dec()
