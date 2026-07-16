@@ -21,6 +21,7 @@ import requests
 
 from fastapi import FastAPI, Depends, HTTPException, status, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.middleware.cors import CORSMiddleware
 from main import graph_builder, build_initial_state
 from pydantic import BaseModel
 from config import OLLAMA_URL, SANDBOX_URL, LLM_PROVIDER
@@ -75,6 +76,15 @@ class Query(BaseModel):
     """
 
     query: str
+    trace_id: str
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 async def health():
