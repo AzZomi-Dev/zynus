@@ -14,7 +14,8 @@ Responsibilities:
 - Apply request rate limiting.
 """
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from main import graph_builder, build_initial_state
 from pydantic import BaseModel
 from config import OLLAMA_URL, SANDBOX_URL, LLM_PROVIDER
@@ -28,8 +29,25 @@ from memory.qdrantClient import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
 import logging
 import requests
+import secrets
+import os
 
 app = FastAPI(title="zynus", version="1.0.5")
+
+security = HTTPBasic()
+
+METRICS_USER = os.getenv("METRICS_USER", "metrics_user")
+METRICS_PASS = os.getenv("METRICS_PASS", "super_secret_password")
+
+def verify_metrics_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_user = secrets.compare_digest(credentials.username, METRICS_USER)
+    correct_pass = secrets.compare_digest(credentials.password, METRICS_PASS)
+    if not (correct_user and correct_pass):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid metrics credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
 class IgnoreMetricsFilter(logging.Filter):
     """
