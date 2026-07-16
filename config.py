@@ -17,7 +17,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv(".env.local", override=False)
 
-ENTRYPOINT = "router"
+ENTRYPOINT = os.getenv("ENTRYPOINT")
 DEBUG_MODE = False
 MODE = "fixed" # fall | fixed
 
