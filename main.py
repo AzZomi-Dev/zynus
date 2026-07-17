@@ -20,6 +20,7 @@ Each node delegates business logic to a dedicated agent.
 
 from langgraph.graph import StateGraph, END
 from agents.router import router_agent
+from agents.planner import planner_agent
 from agents.researcher import researcher_agent
 from agents.responder import responder_agent
 from agents.memory_agent import memory_agent
@@ -53,6 +54,8 @@ class StateSchema():
     """
     
     query: str
+    deep_thinking: bool
+    plan: str
     research: str
     memory: str
     code: str
@@ -93,6 +96,27 @@ def router_node(state):
     
     return {**state, "route": route}
 
+def planner_node(state):
+    """
+    Generates a structured plan for the query.
+    """
+    logger.info(
+        "planner_started",
+        trace_id=state["trace_id"]
+    )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Planner", "status": "running"})
+
+    plan = planner_agent(state["query"])
+    
+    logger.info(
+        "planner_completed",
+        trace_id=state["trace_id"],
+        plan=plan
+    )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Planner", "status": "done"})
+
+    return {**state, "plan": plan}
+
 def researcher_node(state):
     """
     Executes the research workflow and stores the collected context.
@@ -126,7 +150,7 @@ def responder_node(state):
         trace_id=state["trace_id"]
     )
 
-    response = responder_agent(state["query"], state["research"])
+    response = responder_agent(state["query"], state["research"], state["plan"])
 
     logger.info(
         "responder_completed", 
@@ -367,6 +391,12 @@ def route_after_critic(state):
     print(f"\n\nFAILURE, RETRYING.. CONSUMED: {state['retries']} RETRIES\n\n")
     return "coder"
 
+def should_use_planner(state):
+    """
+    Determine if the planner agent should be invoked based on the user's request."""
+    if state["deep_thinking"]:
+        return "planner"
+    return "router"
 
 # ---------------------
 # Graph:
@@ -391,9 +421,10 @@ def route_after_critic(state):
 
 graph = StateGraph(StateSchema)
 
-graph.set_entry_point(ENTRYPOINT)
+graph.set_conditional_entry_point(should_use_planner)
 
 graph.add_node("router", router_node)
+graph.add_node("planner", planner_node)
 graph.add_node("researcher", researcher_node)
 graph.add_node("responder", responder_node)
 graph.add_node("memory", memory_node)
@@ -402,6 +433,7 @@ graph.add_node("executor", executor_node)
 graph.add_node("critic", critic_node)
 graph.add_node("fallback", fallback_node)
 
+graph.add_edge("planner", "router")
 graph.add_conditional_edges("router", route_after_router)
 graph.add_edge("researcher", "responder")
 graph.add_edge("memory", "coder")
@@ -415,7 +447,10 @@ graph.add_conditional_edges("critic", route_after_critic)
 
 graph_builder = graph.compile()
 
-def build_initial_state(query: str):
+def build_initial_state(
+        query: str,
+        deep_thinking: bool = False
+    ):
     """
     Create the initial workflow state for a new request.
 
@@ -423,6 +458,8 @@ def build_initial_state(query: str):
     """
     return {
         "query": query,
+        "deep_thinking": deep_thinking,
+        "plan": "",
         "research": "",
         "memory": "",
         "code": "",

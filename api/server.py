@@ -77,6 +77,7 @@ class Query(BaseModel):
 
     query: str
     trace_id: str
+    deep_thinking: bool = False
 
 app.add_middleware(
     CORSMiddleware,
@@ -186,6 +187,7 @@ async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
         workflow_runs.inc()
         active_workflows.inc()
         query = request.query
+        print("Deep thinking:", request.deep_thinking)
         initial_state = build_initial_state(query)
         initial_state["trace_id"] = request.trace_id
         result = await graph_builder.ainvoke(initial_state)
