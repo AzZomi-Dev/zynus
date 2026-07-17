@@ -302,6 +302,7 @@ MYSQL_ROOT_PASSWORD=123
 MYSQL_DATABASE=zynusdb
 DATABASE_URL=mysql+pymysql://root:123@mysql:3306/zynusdb
 
+ENTRYPOINT=router
 LLM_PROVIDER=groq
 MODEL=llama-3.1-8b-instant
 
@@ -325,6 +326,7 @@ MYSQL_ROOT_PASSWORD=123
 MYSQL_DATABASE=zynusdb
 DATABASE_URL=mysql+pymysql://root:123@localhost:3306/zynusdb
 
+ENTRYPOINT=router
 LLM_PROVIDER=ollama
 MODEL=gemma3:1b
 
