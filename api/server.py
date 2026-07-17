@@ -35,7 +35,7 @@ from memory.qdrantClient import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
 from api.routes.stream import router as stream_router
 
-app = FastAPI(title="zynus", version="1.0.5")
+app = FastAPI(title="zynus", version="1.0.6")
 
 # --- Basic Auth Security Setup ---
 security = HTTPBasic()
