@@ -6,7 +6,7 @@ redis
 rq
 alembic
 psycopg2-binary
-duckduckgo_search
+ddgs
 fastapi
 huggingface_hub
 langchain

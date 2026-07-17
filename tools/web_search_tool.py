@@ -11,8 +11,7 @@ Responsibilities:
 - Handle search failures gracefully.
 """
 
-from duckduckgo_search import DDGS
-
+from ddgs import DDGS
 
 def web_search_tool(query: str) -> list[dict] | str:
     """
