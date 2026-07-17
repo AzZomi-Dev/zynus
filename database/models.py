@@ -48,7 +48,7 @@ class Memory(Base):
     feedback: Mapped[str] = mapped_column(Text)
     retries: Mapped[int] = mapped_column(default=0)
 
-    success: Mapped[int] = mapped_column(
+    success: Mapped[bool] = mapped_column(
         default=False, 
         index=True
     )
@@ -60,7 +60,7 @@ class Memory(Base):
     )
 
     report: Mapped[str] = mapped_column(
-        String(50), 
+        Text, 
         nullable=True
     
     )

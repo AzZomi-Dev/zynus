@@ -302,12 +302,18 @@ MYSQL_ROOT_PASSWORD=123
 MYSQL_DATABASE=zynusdb
 DATABASE_URL=mysql+pymysql://root:123@mysql:3306/zynusdb
 
-MODEL=llama-3.1-8b-instant
-EMB_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+ENTRYPOINT=router
 LLM_PROVIDER=groq
-GROQ_API_KEY=your_groq_api_key
+MODEL=llama-3.1-8b-instant
 
-OLLAMA_URL=http://ollama:11434/api/generate
+EMB_MODEL_PROVIDER=google
+EMB_MODEL=models/gemini-embedding-001
+
+GEMINI_API_KEY=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
+QDRANT_API_KEY=your_qdrant_api_key
+
+OLLAMA_URL=None
 SANDBOX_URL=http://sandbox:7070/execute
 QDRANT_URL=http://qdrant:6333
 REDIS_URL=redis://redis:6379/0
@@ -320,10 +326,16 @@ MYSQL_ROOT_PASSWORD=123
 MYSQL_DATABASE=zynusdb
 DATABASE_URL=mysql+pymysql://root:123@localhost:3306/zynusdb
 
-MODEL=gemma3:1b
-EMB_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+ENTRYPOINT=router
 LLM_PROVIDER=ollama
+MODEL=gemma3:1b
+
+EMB_MODEL_PROVIDER=huggingface
+EMB_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+
+GEMINI_API_KEY=None
 GROQ_API_KEY=None
+QDRANT_API_KEY=None
 
 OLLAMA_URL=http://localhost:11434/api/generate
 SANDBOX_URL=http://localhost:7070/execute
@@ -333,8 +345,12 @@ REDIS_URL=redis://localhost:6379/0
 
 > **Important:** These values are examples. Update them to match your setup.
 >
-> **Note:** Set `LLM_PROVIDER` to `groq` or `ollama` depending on which model provider you want to use. If using Groq, provide a valid `GROQ_API_KEY`.
-
+> **Note:** Set `LLM_PROVIDER` to `groq` or `ollama`, and `EMB_MODEL_PROVIDER` to `google` or `huggingface` depending on the providers you want.
+>
+> - If using **Groq**, create an API key from https://console.groq.com/keys and set `GROQ_API_KEY`.
+> - If using **Google Gemini embeddings**, create an API key from https://aistudio.google.com/app/apikey and set `GEMINI_API_KEY`.
+> - If using **Qdrant Cloud**, create a cluster at https://cloud.qdrant.io, generate an API key, and set `QDRANT_URL` and `QDRANT_API_KEY`.
+> - If using **Ollama**, **Hugging Face embeddings**, or a local **Qdrant** instance, no API keys are required.
 Run with Docker
 
 ```bash

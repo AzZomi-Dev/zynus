@@ -15,7 +15,7 @@ import threading
 
 from qdrant_client import QdrantClient
 
-from config import QDRANT_URL
+from config import QDRANT_URL, QDRANT_API_KEY
 
 qdrant_client: QdrantClient | None = None
 _client_lock = threading.Lock()
@@ -42,6 +42,9 @@ def get_qdrant_client() -> QdrantClient:
         if qdrant_client is not None:
             return qdrant_client
 
-        qdrant_client = QdrantClient(url=QDRANT_URL)
+        qdrant_client = QdrantClient(
+            url=QDRANT_URL,
+            api_key=QDRANT_API_KEY or None
+        )
 
         return qdrant_client

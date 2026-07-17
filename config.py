@@ -17,7 +17,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv(".env.local", override=False)
 
-ENTRYPOINT = "router"
+ENTRYPOINT = os.getenv("ENTRYPOINT")
 DEBUG_MODE = False
 MODE = "fixed" # fall | fixed
 
@@ -29,7 +29,10 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER") # ollama | groq
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OLLAMA_URL = os.getenv("OLLAMA_URL")
 SANDBOX_URL = os.getenv("SANDBOX_URL")
+
 QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 REDIS_URL = os.getenv("REDIS_URL")
 
