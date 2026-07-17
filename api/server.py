@@ -21,6 +21,7 @@ import requests
 
 from fastapi import FastAPI, Depends, HTTPException, status, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.middleware.cors import CORSMiddleware
 from main import graph_builder, build_initial_state
 from pydantic import BaseModel
 from config import OLLAMA_URL, SANDBOX_URL, LLM_PROVIDER
@@ -32,6 +33,7 @@ from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from providers.llms.groq import groq_client
 from memory.qdrantClient import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
+from api.routes.stream import router as stream_router
 
 app = FastAPI(title="zynus", version="1.0.5")
 
@@ -58,8 +60,15 @@ class IgnoreMetricsFilter(logging.Filter):
     def filter(self, record):
         return "/metrics" not in record.getMessage()
 
-logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
+class IgnoreStreamFilter(logging.Filter):
+    def filter(self, record):
+        return "/ask/stream" not in record.getMessage()
 
+logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
+logging.getLogger("uvicorn.access").addFilter(IgnoreStreamFilter())
+
+
+app.include_router(stream_router)
 
 class Query(BaseModel):
     """
@@ -67,6 +76,15 @@ class Query(BaseModel):
     """
 
     query: str
+    trace_id: str
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 async def health():
@@ -168,8 +186,13 @@ async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
         workflow_runs.inc()
         active_workflows.inc()
         query = request.query
-        result = await graph_builder.ainvoke(build_initial_state(query))
+        initial_state = build_initial_state(query)
+        initial_state["trace_id"] = request.trace_id
+        result = await graph_builder.ainvoke(initial_state)
         
-        return result
+        return {
+            "trace_id": initial_state["trace_id"],
+            "result": result
+        }
     finally:
         active_workflows.dec()

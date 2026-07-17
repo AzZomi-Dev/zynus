@@ -34,6 +34,7 @@ from database.repository import MemoryRepository
 from memory.memory_writer import embed_and_upsert_memory
 from redis_services.redis_queue import memory_write_queue
 from rq import Retry
+from api.routes.stream import event_queue
 from config import GRAPH_RETRIES, ENTRYPOINT
 
 # ---------------------
@@ -79,6 +80,7 @@ def router_node(state):
         "router_started",
         trace_id=state["trace_id"]
     )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Router", "status": "running"})
     
     route = router_agent(state["query"])
 
@@ -87,6 +89,7 @@ def router_node(state):
         trace_id=state["trace_id"],
         route=route
     )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Router", "status": "done"})
     
     return {**state, "route": route}
 
@@ -94,6 +97,8 @@ def researcher_node(state):
     """
     Executes the research workflow and stores the collected context.
     """
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Researcher", "status": "running"})
+
     logger.info(
         "researcher_started", 
         trace_id=state["trace_id"]
@@ -103,6 +108,8 @@ def researcher_node(state):
         "researcher_completed", 
         trace_id=state["trace_id"]
     )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Researcher", "status": "done"})
+
     return {
         **state,
         "research": research
@@ -112,6 +119,8 @@ def responder_node(state):
     """
     Generates the final natural-language response using the research context.
     """
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Responder", "status": "running"})
+    
     logger.info(
         "responder_started", 
         trace_id=state["trace_id"]
@@ -123,6 +132,7 @@ def responder_node(state):
         "responder_completed", 
         trace_id=state["trace_id"]
     )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Responder", "status": "done"})
 
     return {
         **state,
@@ -133,6 +143,8 @@ def memory_node(state):
     """
     Retrieves relevant semantic memories from Redis/Qdrant.
     """
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Memory", "status": "running"})
+    
     logger.info(
         "memory_started", 
         trace_id=state["trace_id"]
@@ -146,6 +158,7 @@ def memory_node(state):
         memory_found=bool(memory),
         cache_hit=bool(cache_hit)
     )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Memory", "status": "done"})
     
     return {**state, "memory": memory}
 
@@ -154,6 +167,8 @@ def coder_node(state):
     Generates Python code using the current query, retrieved memory,
     and critic feedback from previous attempts.
     """
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Coder", "status": "running"})
+
     logger.info(
         "coder_started",
         trace_id=state["trace_id"]
@@ -171,6 +186,7 @@ def coder_node(state):
         "coder_completed",
         trace_id=state["trace_id"]
     )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Coder", "status": "done"})
     
     return {
         **state, 
@@ -182,6 +198,8 @@ def executor_node(state):
     """
     Executes generated code inside the sandbox environment.
     """
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Executor", "status": "running"})
+    
     logger.info(
         "executor_started",
         trace_id=state["trace_id"]
@@ -194,6 +212,7 @@ def executor_node(state):
         trace_id=state["trace_id"],
         error=stderr
     )
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Executor", "status": "done"})
 
     return {
         **state, 
@@ -208,6 +227,8 @@ def critic_node(state):
     Determines whether the workflow should terminate or perform another
     repair iteration.
     """
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Critic", "status": "running"})
+
     logger.info(
         "critic_started",
         trace_id=state["trace_id"]
@@ -225,6 +246,7 @@ def critic_node(state):
             "execution_success", 
             trace_id=state["trace_id"]
         )
+        event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Critic", "status": "done"})
 
         # Persist only repaired solutions to build a knowledge base of
         # previously resolved failures.
@@ -256,6 +278,7 @@ def critic_node(state):
             trace_id=state["trace_id"],
             feedback=feedback
         )
+        event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Critic", "status": "done"})
 
         state["retries"] += 1
 
@@ -272,6 +295,8 @@ def fallback_node(state):
 
     Persists execution failure information and returns a diagnostic report.
     """
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Fallback", "status": "running"})
+    
     logger.info("fallback_started")
 
     report = fallback_agent(
@@ -294,6 +319,8 @@ def fallback_node(state):
         "trace_id": state["trace_id"]
     }
     logger.info("fallback_completed")
+    
+    event_queue.put_nowait({"trace_id": state["trace_id"], "step": "Fallback", "status": "done"})
     
     repo = MemoryRepository()
     memory_write_queue.enqueue(
