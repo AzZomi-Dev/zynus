@@ -67,7 +67,6 @@ class IgnoreStreamFilter(logging.Filter):
 logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
 logging.getLogger("uvicorn.access").addFilter(IgnoreStreamFilter())
 
-
 app.include_router(stream_router)
 
 class Query(BaseModel):
@@ -187,8 +186,9 @@ async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
         workflow_runs.inc()
         active_workflows.inc()
         query = request.query
-        print("Deep thinking:", request.deep_thinking)
-        initial_state = build_initial_state(query)
+        deepThinking = request.deep_thinking
+        print("Deep thinking:", deepThinking)
+        initial_state = build_initial_state(query, deepThinking)
         initial_state["trace_id"] = request.trace_id
         result = await graph_builder.ainvoke(initial_state)
         
