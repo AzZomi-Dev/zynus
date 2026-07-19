@@ -202,7 +202,8 @@ def coder_node(state):
         state["query"],
         state["memory"],
         state["code"],
-        state["feedback"]
+        state["feedback"],
+        state["plan"]
     )
     code = extract_code(code)
 
