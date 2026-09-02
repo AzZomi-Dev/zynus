@@ -46,7 +46,7 @@ def ask_ollama(prompt: str) -> str:
         "stream": True,
     }
 
-    print(payload)
+    print(f"\n\n{payload}\n\n")
 
     llm_requests.inc()
 

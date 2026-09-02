@@ -78,7 +78,7 @@ Available tools:
 
 Return only valid JSON.
 
-Example:
+Schema:
 {{
     "tool_name": "retriever_tool",
     "tool_input": "what is Python?"
@@ -101,7 +101,9 @@ The query is:
         tool_name = parsed.tool_name
         tool_input = parsed.tool_input
 
+        observations = []
         observation = call_tool(tool_name, tool_input)
+        observations.append(observation)
 
         scratchpad += f"""
 Tool name: {tool_name}
@@ -109,4 +111,4 @@ Tool input: {tool_input}
 Observation: {observation}
 """
 
-    return scratchpad
+    return observations

@@ -8,17 +8,16 @@ Retrieval flow:
 1. Check Redis cache.
 2. If cached, return immediately.
 3. Otherwise, query Qdrant.
-4. Format retrieved memories.
-5. Cache the formatted result.
-6. Return the formatted context.
+5. Cache the retrieved memories if any.
+6. Return the retrieved memories.
 
 Responsibilities:
 - Coordinate memory retrieval.
 - Utilize Redis caching.
-- Format memories for prompt injection.
+- Retrieve memories for prompt injection.
 """
 
-from memory.memory_retriever import retrieve_memory
+from tools.rag import retriever_tool
 from redis_services.redis_cache import (
     get_cached_memory,
     set_memory_cache,
@@ -30,7 +29,7 @@ def memory_agent(query: str) -> tuple[str, bool]:
     Retrieve relevant semantic memories for a query.
 
     The returned context is intended to be injected directly into LLM
-    prompts to improve code generation using previous successful
+    prompts to improve the generation using previous successful
     solutions.
 
     Args:
@@ -39,33 +38,17 @@ def memory_agent(query: str) -> tuple[str, bool]:
 
     Returns:
         A tuple containing:
-        - Formatted memory context.
+        - Memory.
         - True if served from Redis cache, otherwise False.
     """
 
-    # Attempt to serve from Redis cache first.
     cached = get_cached_memory(query)
-
     if cached:
         return cached, True
 
-    # Cache miss: perform semantic search.
-    points = retrieve_memory(query)
+    memory_docs = retriever_tool(query, "memory")
+    if memory_docs:
+        memory = "\n\n".join(memory_docs)
+        set_memory_cache(query, memory)
 
-    docs = []
-
-    for point in points:
-        docs.append(
-            f"""
-Query: {point.payload["query"]}
-Its solution: {point.payload["solution"]}
-"""
-        )
-
-    result = "\n\n".join(docs)
-
-    # Cache successful retrievals.
-    if result:
-        set_memory_cache(query, result)
-
-    return result, False
+    return memory, False
