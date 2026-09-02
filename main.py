@@ -32,7 +32,7 @@ from observability.logger import logger
 from observability.tracing import create_trace_id
 from tools.utils import extract_code, classify_failure
 from database.repository import MemoryRepository
-from memory.memory_writer import embed_and_upsert_memory
+from qdrant.memory_writer import _insert_memory
 from redis_services.redis_queue import memory_write_queue
 from rq import Retry
 from api.routes.stream import event_queue
@@ -288,7 +288,7 @@ def critic_node(state):
                 "trace_id": state["trace_id"]
             }
 
-            embed_and_upsert_memory(record, state["trace_id"])
+            _insert_memory(record, state["trace_id"])
             
     else:
         state["had_initial_error"] = True
@@ -476,4 +476,4 @@ def build_initial_state(
     }
 
 if __name__ == "__main__":
-    graph_builder.invoke(build_initial_state("Say Hi using Python"))
+    graph_builder.invoke(build_initial_state("Using Python code print 'Hello'"))

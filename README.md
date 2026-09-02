@@ -224,11 +224,10 @@ zynus/
 │   ├── models.py
 │   └── repository.py
 │
-├── memory/
-│   ├── init_qdrant.py
-│   ├── memory_retriever.py
+├── qdrant/
+│   ├── _ensure_collection.py
 │   ├── memory_writer.py
-│   └── qdrantClient.py
+│   └── vectorstore.py
 │
 ├── middleware/
 │   └── rate_limit.py
