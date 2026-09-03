@@ -34,11 +34,10 @@ def responder_agent(query: str, research: str, plan: str) -> str:
     prompt = f"""
 Query:
 {query}
-
-Research:
-{research}
 """
     if plan:
         prompt += f"\nPlan:\n{plan}"
+    if research:
+        prompt += f"\nResearch:\n{research}\n"
 
     return ask_llm(prompt)
