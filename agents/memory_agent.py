@@ -17,7 +17,7 @@ Responsibilities:
 - Retrieve memories for prompt injection.
 """
 
-from tools.rag import retriever_tool
+from tools.rag_tool import retriever_tool
 from redis_services.redis_cache import (
     get_cached_memory,
     set_memory_cache,
@@ -50,5 +50,6 @@ def memory_agent(query: str) -> tuple[str, bool]:
     if memory_docs:
         memory = "\n\n".join(memory_docs)
         set_memory_cache(query, memory)
+        return memory, False
 
-    return memory, False
+    return "", False

@@ -3,6 +3,7 @@ groq
 langchain-google-genai
 qdrant_client
 redis
+mcp
 rq
 alembic
 psycopg2-binary

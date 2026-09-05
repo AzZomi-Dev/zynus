@@ -37,6 +37,7 @@ from redis_services.redis_queue import memory_write_queue
 from rq import Retry
 from api.routes.stream import event_queue
 from config import GRAPH_RETRIES, ENTRYPOINT
+import asyncio
 
 # ---------------------
 # Shared StateSchema
@@ -117,7 +118,7 @@ def planner_node(state):
 
     return {**state, "plan": plan}
 
-def researcher_node(state):
+async def researcher_node(state):
     """
     Executes the research workflow and stores the collected context.
     """
@@ -127,7 +128,7 @@ def researcher_node(state):
         "researcher_started", 
         trace_id=state["trace_id"]
     )
-    research = researcher_agent(state["query"])
+    research = await researcher_agent(state["query"])
     logger.info(
         "researcher_completed", 
         trace_id=state["trace_id"]
@@ -476,4 +477,6 @@ def build_initial_state(
     }
 
 if __name__ == "__main__":
-    graph_builder.invoke(build_initial_state("Using Python code print 'Hello'"))
+    asyncio.run(
+        graph_builder.ainvoke(build_initial_state("Latest news (you can use research)"))
+    )

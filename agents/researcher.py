@@ -20,31 +20,21 @@ Responsibilities:
 """
 
 import json
+from mcp import Client, StdioServerParameters
+from mcp.client.stdio import stdio_client
 
 from agents.llm import ask_llm_json
 from schemas.researcher_schema import ResearcherResponse
-from tools.registry import TOOLS
+from mcp_services.mcp_client import call_mcp_tool
+from observability.logger import logger
+from pydantic import ValidationError
 
+server_params = StdioServerParameters(
+    command="python",
+    args=["-m", "mcp_services.mcp_server"]
+)
 
-def call_tool(tool_name: str, tool_input: str):
-    """
-    Execute a registered tool.
-
-    Args:
-        tool_name:
-            Name of the tool selected by the LLM.
-
-        tool_input:
-            Input passed to the selected tool.
-
-    Returns:
-        Tool execution result.
-    """
-
-    return TOOLS[tool_name]["function"](tool_input)
-
-
-def researcher_agent(query: str) -> str:
+async def researcher_agent(query: str) -> str:
     """
     Perform tool-assisted research for a user query.
 
@@ -58,19 +48,22 @@ def researcher_agent(query: str) -> str:
             User research request.
 
     Returns:
-        Scratchpad containing all tool calls and observations.
+        Observations.
     """
 
-    available_tools = {
-        tool_name: {
-            "description": TOOLS[tool_name]["description"]
+    async with Client(stdio_client(server_params)) as client:
+    
+        tools = await client.list_tools()
+        available_tools = {
+            tool.name: {
+                "description": tool.description
+            }
+            for tool in tools.tools
         }
-        for tool_name in TOOLS
-    }
+        scratchpad = ""
+        observations = []
 
-    scratchpad = ""
-
-    prompt = f"""
+        prompt = f"""
 You are a researcher agent.
 
 Available tools:
@@ -80,35 +73,49 @@ Return only valid JSON.
 
 Schema:
 {{
-    "tool_name": "retriever_tool",
+    "tool_name": "retriever",
     "tool_input": "what is Python?"
 }}
 
 The query is:
 {query}
-"""
+    """
 
-    # Perform a fixed number of reasoning iterations.
-    for _ in range(2):
+        # Perform a fixed number of reasoning iterations.
+        for _ in range(2):
 
-        if scratchpad:
-            prompt += f"\nScratchpad:\n{scratchpad}"
+            if scratchpad:
+                prompt += f"\nScratchpad:\n{scratchpad}"
 
-        response = ask_llm_json(prompt)
+            response = ask_llm_json(prompt)
 
-        parsed = ResearcherResponse(**response)
+            try:
+                parsed = ResearcherResponse(**response)
+            except ValidationError as e:
+                logger.warning(
+                    "Invalid researcher response. Retrying: %s",
+                    e
+                )
+                continue
+            
+            tool_name = parsed.tool_name
+            tool_input = parsed.tool_input
 
-        tool_name = parsed.tool_name
-        tool_input = parsed.tool_input
+            result = await call_mcp_tool(
+                tool_name,
+                {"query": tool_input}
+            )
+            if not result.content:
+                logger.info("No faqs found in the collection")
+                return ""
 
-        observations = []
-        observation = call_tool(tool_name, tool_input)
-        observations.append(observation)
+            observation = result.content[0].text
+            observations.append(observation)
 
-        scratchpad += f"""
+            scratchpad += f"""
 Tool name: {tool_name}
 Tool input: {tool_input}
 Observation: {observation}
 """
 
-    return observations
+        return observations

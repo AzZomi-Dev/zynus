@@ -13,24 +13,40 @@ def _ensure_collection(my_collection: str) -> None:
     embeddings = get_embeddings()
     qdrant_client = get_qdrant_client()
 
+    vector_size = len(
+        embeddings.embed_query("dimension-size")
+    )
+
     collections = {
         collection.name
         for collection in qdrant_client.get_collections().collections
     }
 
-    if my_collection in collections:
+    if my_collection not in collections:
+        logger.info("Creating collection '%s'", my_collection)
+
+        qdrant_client.create_collection(
+            collection_name=my_collection,
+            vectors_config=VectorParams(
+                size=vector_size,
+                distance=Distance.COSINE,
+            ),
+        )
         return
 
-    logger.info("Creating collection '%s'", my_collection)
+    collection_info = qdrant_client.get_collection(my_collection)
 
-    vector_size = len(
-        embeddings.embed_query("dimension-size")
+    existing_vector_size = (
+        collection_info.config.params.vectors.size
     )
 
-    qdrant_client.create_collection(
-        collection_name=my_collection,
-        vectors_config=VectorParams(
-            size=vector_size,
-            distance=Distance.COSINE,
-        ),
-    )
+    if existing_vector_size != vector_size:
+        raise ValueError(
+            f"""
+Embedding dimension mismatch for collection '{my_collection}'.
+The collection uses {existing_vector_size} dimensions
+but the current embedding model uses {vector_size} dimensions.
+Use an embedding model compatible with this collection
+or manually create/configure a compatible collection
+"""
+        )

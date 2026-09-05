@@ -2,7 +2,19 @@ from database.repository import FAQRepository
 from langchain_core.documents import Document
 from qdrant.vectorstore import _get_vectorstore
 
-def _insert_faq(my_collection: str) -> int:
+def _insert_faq(question: str, answer: str):
+    text = f"Question: {question}\nAnswer: {answer}"
+    docs = [
+        Document(
+            page_content=text,
+            metadata={}
+        )
+    ]
+    vectorstore = _get_vectorstore("faq")
+    vectorstore.add_documents(docs)
+    return len(docs)
+
+def _insert_faq_from_db() -> int:
     """
     Load FAQ records from MySQL into Qdrant.
 
@@ -31,7 +43,7 @@ Answer:
         for faq in faq_records
     ]
 
-    vectorstore = _get_vectorstore(my_collection)
+    vectorstore = _get_vectorstore("faq")
     vectorstore.add_documents(docs)
 
     return len(docs)
