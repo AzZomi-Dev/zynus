@@ -350,6 +350,7 @@ REDIS_URL=redis://localhost:6379/0
 > - If using **Google Gemini embeddings**, create an API key from https://aistudio.google.com/app/apikey and set `GEMINI_API_KEY`.
 > - If using **Qdrant Cloud**, create a cluster at https://cloud.qdrant.io, generate an API key, and set `QDRANT_URL` and `QDRANT_API_KEY`.
 > - If using **Ollama**, **Hugging Face embeddings**, or a local **Qdrant** instance, no API keys are required.
+
 Run with Docker
 
 ```bash
