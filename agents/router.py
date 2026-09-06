@@ -19,7 +19,8 @@ Responsibilities:
 
 from agents.llm import ask_llm_json
 from schemas.router_schema import RouterResponse
-
+from pydantic import ValidationError
+from observability.logger import logger
 
 def router_agent(query: str) -> str:
     """
@@ -66,19 +67,22 @@ Example:
 The query is:
 {query}
 """
-
-    response = ask_llm_json(prompt)
-
-    parsed = RouterResponse(**response)
-
     allowed_routes = {
         "qa",
         "research",
         "code",
     }
+    
+    for _ in range(3):
+        response = ask_llm_json(prompt)
+        try:
+            parsed = RouterResponse(**response)
+            # Defensive validation in case the LLM returns an unexpected route.
+            if parsed.route not in allowed_routes:
+                return "qa"
 
-    # Defensive validation in case the LLM returns an unexpected route.
-    if parsed.route not in allowed_routes:
-        return "qa"
-
-    return parsed.route
+            return parsed.route
+        except ValidationError as e:
+            logger.warning("Invalid router response. Retrying: %s", e)
+            continue
+    return "qa"
