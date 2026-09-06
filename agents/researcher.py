@@ -20,12 +20,11 @@ Responsibilities:
 """
 
 import json
-from mcp import Client, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import StdioServerParameters
 
 from agents.llm import ask_llm_json
 from schemas.researcher_schema import ResearcherResponse
-from mcp_services.mcp_client import call_mcp_tool
+from mcp_services.mcp_client import call_mcp_tool, get_available_tools
 from observability.logger import logger
 from pydantic import ValidationError
 
@@ -51,19 +50,11 @@ async def researcher_agent(query: str) -> str:
         Observations.
     """
 
-    async with Client(stdio_client(server_params)) as client:
-    
-        tools = await client.list_tools()
-        available_tools = {
-            tool.name: {
-                "description": tool.description
-            }
-            for tool in tools.tools
-        }
-        scratchpad = ""
-        observations = []
+    available_tools = await get_available_tools()
+    scratchpad = ""
+    observations = []
 
-        prompt = f"""
+    prompt = f"""
 You are a researcher agent.
 
 Available tools:
@@ -73,49 +64,49 @@ Return only valid JSON.
 
 Schema:
 {{
-    "tool_name": "retriever",
-    "tool_input": "what is Python?"
+"tool_name": "retriever",
+"tool_input": "what is Python?"
 }}
 
 The query is:
 {query}
-    """
+"""
 
-        # Perform a fixed number of reasoning iterations.
-        for _ in range(2):
+    # Perform a fixed number of reasoning iterations.
+    for _ in range(2):
 
-            if scratchpad:
-                prompt += f"\nScratchpad:\n{scratchpad}"
+        if scratchpad:
+            prompt += f"\nScratchpad:\n{scratchpad}"
 
-            response = ask_llm_json(prompt)
+        response = ask_llm_json(prompt)
 
-            try:
-                parsed = ResearcherResponse(**response)
-            except ValidationError as e:
-                logger.warning(
-                    "Invalid researcher response. Retrying: %s",
-                    e
-                )
-                continue
-            
-            tool_name = parsed.tool_name
-            tool_input = parsed.tool_input
-
-            result = await call_mcp_tool(
-                tool_name,
-                {"query": tool_input}
+        try:
+            parsed = ResearcherResponse(**response)
+        except ValidationError as e:
+            logger.warning(
+                "Invalid researcher response. Retrying: %s",
+                e
             )
-            if not result.content:
-                logger.info("No faqs found in the collection")
-                return ""
+            continue
+        
+        tool_name = parsed.tool_name
+        tool_input = parsed.tool_input
 
-            observation = result.content[0].text
-            observations.append(observation)
+        result = await call_mcp_tool(
+            tool_name,
+            {"query": tool_input}
+        )
+        if not result.content:
+            logger.info("No faqs found in the collection")
+            return ""
 
-            scratchpad += f"""
+        observation = result.content[0].text
+        observations.append(observation)
+
+        scratchpad += f"""
 Tool name: {tool_name}
 Tool input: {tool_input}
 Observation: {observation}
 """
 
-        return observations
+    return observations
