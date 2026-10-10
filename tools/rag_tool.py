@@ -27,8 +27,11 @@ def _get_retriever(my_collection: str):
     vectorstore = _get_vectorstore(my_collection)
 
     return vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 1},
+        search_type="similarity_score_threshold",
+        search_kwargs={
+            "k": 1,
+            "score_threshold": 0.8
+        }
     )
 
 def retriever_tool(query: str, my_collection: str) -> list[str]:

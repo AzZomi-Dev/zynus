@@ -398,7 +398,7 @@ def should_use_planner(state):
     Determine if the planner agent should be invoked based on the user's request."""
     if state["deep_thinking"]:
         return "planner"
-    return "router"
+    return ENTRYPOINT
 
 # ---------------------
 # Graph:

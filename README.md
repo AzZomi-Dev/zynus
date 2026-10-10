@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo.svg" alt="Zynus" width="420">
+  <img src="./filogo.png" alt="Zynus" width="420">
 </p>
 
 ---

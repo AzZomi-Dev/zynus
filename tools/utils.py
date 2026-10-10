@@ -32,6 +32,24 @@ def get_embeddings():
     if EMB_MODEL_PROVIDER == "huggingface":
         return get_huggingface_embeddings()
     
+_vector_size: int | None = None
+_vec_lock = threading.Lock()
+    
+def get_vector_size():
+    global _vector_size
+
+    if _vector_size:
+        return _vector_size
+
+    with _vec_lock:
+        if _vector_size:
+            return _vector_size
+        
+        _vector_size = len(
+            get_embeddings().embed_query("dimension size")
+        )
+        return _vector_size
+        
 def extract_code(code):
     pattern = r"```python3?\n(?P<code>(?:.|\n)*?)```"
     match = re.search(pattern, code)

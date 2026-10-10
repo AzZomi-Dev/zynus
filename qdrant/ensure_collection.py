@@ -1,6 +1,6 @@
 from observability.logger import logger
 from qdrant_client.models import Distance, VectorParams
-from tools.utils import get_embeddings, get_qdrant_client
+from tools.utils import get_qdrant_client, get_vector_size
 
 def _ensure_collection(my_collection: str) -> None:
     """
@@ -10,13 +10,9 @@ def _ensure_collection(my_collection: str) -> None:
     embedding model to avoid hardcoding vector sizes.
     """
 
-    embeddings = get_embeddings()
     qdrant_client = get_qdrant_client()
 
-    vector_size = len(
-        embeddings.embed_query("dimension-size")
-    )
-
+    vector_size = get_vector_size()
     collections = {
         collection.name
         for collection in qdrant_client.get_collections().collections
