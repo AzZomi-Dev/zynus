@@ -19,7 +19,8 @@ Responsibilities:
 from agents.llm import ask_llm_json
 from config import DEBUG_MODE, MODE
 from schemas.critic_schema import CriticResponse
-
+from pydantic import ValidationError
+from observability.logger import logger
 
 def critic_agent(
     query: str,
@@ -91,9 +92,13 @@ Example:
 
 Be strict and concise.
 """
+    for _ in range(3):
 
-    response = ask_llm_json(prompt)
-
-    parsed = CriticResponse(**response)
-
-    return parsed.success, parsed.feedback
+        response = ask_llm_json(prompt)
+        try:
+            parsed = CriticResponse(**response)
+            return parsed.success, parsed.feedback
+        except ValidationError as e:
+            logger.warning("Invalid critic response. Retrying: %s",e)
+            continue
+    return False, "Critic failed to return a valid response."

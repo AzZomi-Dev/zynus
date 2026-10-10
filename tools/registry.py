@@ -11,7 +11,7 @@ agent. Each registered tool exposes:
 To add a new tool, register it in the TOOLS dictionary.
 """
 
-from tools.rag import retriever_tool
+from tools.rag_tool import retriever_tool
 from tools.web_search_tool import web_search_tool
 
 TOOLS = {

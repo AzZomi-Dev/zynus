@@ -3,10 +3,11 @@ groq
 langchain-google-genai
 qdrant_client
 redis
+mcp
 rq
 alembic
 psycopg2-binary
-duckduckgo_search
+ddgs
 fastapi
 huggingface_hub
 langchain

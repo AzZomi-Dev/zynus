@@ -27,7 +27,7 @@ def ask_groq(prompt: str) -> str:
         }],
         "stream": True
     }
-    print(payload)
+    print(f"\n\n{payload}\n\n")
     
     for attempt in range(4):
         try:

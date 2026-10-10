@@ -31,7 +31,7 @@ from middleware.rate_limit import rate_limit_dependency
 from redis_services.redis_client import redis_conn
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from providers.llms.groq import groq_client
-from memory.qdrantClient import get_qdrant_client
+from tools.utils import get_qdrant_client
 from observability.metrics import workflow_runs, active_workflows
 from api.routes.stream import router as stream_router
 
@@ -67,7 +67,6 @@ class IgnoreStreamFilter(logging.Filter):
 logging.getLogger("uvicorn.access").addFilter(IgnoreMetricsFilter())
 logging.getLogger("uvicorn.access").addFilter(IgnoreStreamFilter())
 
-
 app.include_router(stream_router)
 
 class Query(BaseModel):
@@ -77,6 +76,7 @@ class Query(BaseModel):
 
     query: str
     trace_id: str
+    deep_thinking: bool = False
 
 app.add_middleware(
     CORSMiddleware,
@@ -186,7 +186,9 @@ async def ask(request: Query, _: None = Depends(rate_limit_dependency)):
         workflow_runs.inc()
         active_workflows.inc()
         query = request.query
-        initial_state = build_initial_state(query)
+        deepThinking = request.deep_thinking
+        print("Deep thinking:", deepThinking)
+        initial_state = build_initial_state(query, deepThinking)
         initial_state["trace_id"] = request.trace_id
         result = await graph_builder.ainvoke(initial_state)
         

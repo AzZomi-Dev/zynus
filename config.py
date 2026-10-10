@@ -23,6 +23,7 @@ MODE = "fixed" # fall | fixed
 
 EMB_MODEL = os.getenv("EMB_MODEL")
 EMB_MODEL_PROVIDER = os.getenv("EMB_MODEL_PROVIDER") # google | huggingface
+OFFLINE_HF_EMB = os.getenv("OFFLINE_HF_EMB")
 
 MODEL = os.getenv("MODEL")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER") # ollama | groq
@@ -38,6 +39,6 @@ REDIS_URL = os.getenv("REDIS_URL")
 
 TTL = 300
 REQUESTS_WINDOW = 60
-REQUESTS_LIMIT = 4
+REQUESTS_LIMIT = 60
 
 GRAPH_RETRIES = 3

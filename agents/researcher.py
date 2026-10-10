@@ -20,31 +20,20 @@ Responsibilities:
 """
 
 import json
+from mcp import StdioServerParameters
 
 from agents.llm import ask_llm_json
 from schemas.researcher_schema import ResearcherResponse
-from tools.registry import TOOLS
+from mcp_services.mcp_client import call_mcp_tool, get_available_tools
+from observability.logger import logger
+from pydantic import ValidationError
 
+server_params = StdioServerParameters(
+    command="python",
+    args=["-m", "mcp_services.mcp_server"]
+)
 
-def call_tool(tool_name: str, tool_input: str):
-    """
-    Execute a registered tool.
-
-    Args:
-        tool_name:
-            Name of the tool selected by the LLM.
-
-        tool_input:
-            Input passed to the selected tool.
-
-    Returns:
-        Tool execution result.
-    """
-
-    return TOOLS[tool_name]["function"](tool_input)
-
-
-def researcher_agent(query: str) -> str:
+async def researcher_agent(query: str) -> str:
     """
     Perform tool-assisted research for a user query.
 
@@ -58,17 +47,12 @@ def researcher_agent(query: str) -> str:
             User research request.
 
     Returns:
-        Scratchpad containing all tool calls and observations.
+        Observations.
     """
 
-    available_tools = {
-        tool_name: {
-            "description": TOOLS[tool_name]["description"]
-        }
-        for tool_name in TOOLS
-    }
-
+    available_tools = await get_available_tools()
     scratchpad = ""
+    observations = []
 
     prompt = f"""
 You are a researcher agent.
@@ -78,10 +62,10 @@ Available tools:
 
 Return only valid JSON.
 
-Example:
+Schema:
 {{
-    "tool_name": "retriever_tool",
-    "tool_input": "what is Python?"
+"tool_name": "retriever",
+"tool_input": "what is Python?"
 }}
 
 The query is:
@@ -96,12 +80,28 @@ The query is:
 
         response = ask_llm_json(prompt)
 
-        parsed = ResearcherResponse(**response)
-
+        try:
+            parsed = ResearcherResponse(**response)
+        except ValidationError as e:
+            logger.warning(
+                "Invalid researcher response. Retrying: %s",
+                e
+            )
+            continue
+        
         tool_name = parsed.tool_name
         tool_input = parsed.tool_input
 
-        observation = call_tool(tool_name, tool_input)
+        result = await call_mcp_tool(
+            tool_name,
+            {"query": tool_input}
+        )
+        if not result.content:
+            logger.info("No faqs found in the collection")
+            return ""
+
+        observation = result.content[0].text
+        observations.append(observation)
 
         scratchpad += f"""
 Tool name: {tool_name}
@@ -109,4 +109,4 @@ Tool input: {tool_input}
 Observation: {observation}
 """
 
-    return scratchpad
+    return observations

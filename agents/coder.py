@@ -22,6 +22,7 @@ def coder_agent(
     memory: str,
     code: str,
     feedback: str,
+    plan: str
 ) -> str:
     """
     Generate Python code for the given task.
@@ -57,6 +58,12 @@ def coder_agent(
         return "```print('Hello World')```"
 
     prompt = f"Without explanation, using Python, solve this: {query}"
+
+    if plan:
+        prompt += f"""
+Plan:
+{plan}
+"""
 
     if memory:
         prompt += f"""
