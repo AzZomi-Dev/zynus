@@ -10,6 +10,7 @@ services:
     environment:
       MODEL: ${MODEL}
       EMB_MODEL: ${EMB_MODEL}
+      OFFLINE_HF_EMB: ${OFFLINE_HF_EMB}
       EMB_MODEL_PROVIDER: ${EMB_MODEL_PROVIDER}
       LLM_PROVIDER: ${LLM_PROVIDER}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
@@ -52,6 +53,7 @@ services:
     environment:
       MODEL: ${MODEL}
       EMB_MODEL: ${EMB_MODEL}
+      OFFLINE_HF_EMB: ${OFFLINE_HF_EMB}
       EMB_MODEL_PROVIDER: ${EMB_MODEL_PROVIDER}
       LLM_PROVIDER: ${LLM_PROVIDER}
       GEMINI_API_KEY: ${GEMINI_API_KEY}

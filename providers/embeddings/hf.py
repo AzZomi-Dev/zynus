@@ -1,5 +1,5 @@
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-from config import EMB_MODEL
+from config import EMB_MODEL, OFFLINE_HF_EMB
 import threading
 
 _emb_lock = threading.Lock()
@@ -16,6 +16,7 @@ def get_huggingface_embeddings():
             return _hf_embeddings
         
         _hf_embeddings = HuggingFaceEmbeddings(
-            model_name=EMB_MODEL
+            model_name=EMB_MODEL,
+            model_kwargs={"local_files_only": OFFLINE_HF_EMB}
         )
         return _hf_embeddings
